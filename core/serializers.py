@@ -27,3 +27,9 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'name', 'email', 'role', 'date_joined']
+from .models import Candidate
+
+class CVUploadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Candidate
+        fields = ['cv_file_path']
