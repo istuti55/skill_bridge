@@ -90,3 +90,97 @@ class CVUploadView(APIView):
             'message': 'CV uploaded successfully',
             'cv_file_path': candidate.cv_file_path
         }, status=status.HTTP_200_OK)
+    
+from .models import Job, Company, Application
+from .serializers import JobSerializer, ApplicationSerializer
+from rest_framework import permissions
+
+
+class JobListCreateView(generics.ListCreateAPIView):
+    serializer_class = JobSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Job.objects.filter(status='approved').order_by('-posted_date')
+
+    def perform_create(self, serializer):
+        company = Company.objects.get(user=self.request.user)
+        serializer.save(company=company)
+
+
+class JobApproveView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, pk):
+        try:
+            job = Job.objects.get(pk=pk)
+        except Job.DoesNotExist:
+            return Response({'error': 'Job not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        new_status = request.data.get('status')
+        if new_status not in ['approved', 'rejected']:
+            return Response({'error': 'Invalid status'}, status=status.HTTP_400_BAD_REQUEST)
+
+        job.status = new_status
+        job.save()
+        return Response(JobSerializer(job).data)
+
+
+class ApplyToJobView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            job = Job.objects.get(pk=pk, status='approved')
+        except Job.DoesNotExist:
+            return Response({'error': 'Job not found or not approved'}, status=status.HTTP_404_NOT_FOUND)
+
+        candidate = Candidate.objects.get(user=request.user)
+
+        if Application.objects.filter(candidate=candidate, job=job).exists():
+            return Response({'error': 'You already applied to this job'}, status=status.HTTP_400_BAD_REQUEST)
+
+        application = Application.objects.create(candidate=candidate, job=job, match_score=0)
+        return Response(ApplicationSerializer(application).data, status=status.HTTP_201_CREATED)
+
+
+class MyApplicationsView(generics.ListAPIView):
+    serializer_class = ApplicationSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        candidate = Candidate.objects.get(user=self.request.user)
+        return Application.objects.filter(candidate=candidate).order_by('-applied_date')
+
+
+class JobApplicationsView(generics.ListAPIView):
+    serializer_class = ApplicationSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        job_id = self.kwargs['pk']
+        return Application.objects.filter(job_id=job_id).order_by('-match_score')
+
+
+class UpdateApplicationStageView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, pk):
+        try:
+            application = Application.objects.get(pk=pk)
+        except Application.DoesNotExist:
+            return Response({'error': 'Application not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        new_stage = request.data.get('recruitment_stage')
+        valid_stages = [choice[0] for choice in Application.STAGE_CHOICES]
+        if new_stage not in valid_stages:
+            return Response({'error': 'Invalid stage'}, status=status.HTTP_400_BAD_REQUEST)
+
+        application.recruitment_stage = new_stage
+        if request.data.get('interview_date'):
+            application.interview_date = request.data.get('interview_date')
+        if request.data.get('rejection_reason'):
+            application.rejection_reason = request.data.get('rejection_reason')
+        application.save()
+
+        return Response(ApplicationSerializer(application).data)
