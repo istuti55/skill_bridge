@@ -1,0 +1,45 @@
+{
+    "name": "ALEX MORGAN",
+    "email": "alex.morgan@email.com",
+    "phone": "(555) 019-2834",
+    "skills": [
+        "Python",
+        "JavaScript (ES6+)",
+        "TypeScript",
+        "SQL",
+        "HTML5/CSS3",
+        "React",
+        "Node.js",
+        "Django",
+        "PostgreSQL",
+        "Docker",
+        "Git",
+        "AWS",
+        "CI/CD pipelines",
+        "RESTful APIs"
+    ],
+    "education": [
+        "Bachelor of Science in Computer Science — State University"
+    ],
+    "experience": [
+        {
+            "years": 4,
+            "company": "TechCorp Solutions",
+            "position": "Software Engineer",
+            "description": "Led the backend migration to microservices architecture, reducing server response latency by 25%. Developed and maintained high-traffic RESTful APIs serving over 500,000 active monthly users."
+        },
+        {
+            "years": 2,
+            "company": "Apex Digital Agency",
+            "position": "Junior Web Developer",
+            "description": "Built responsive user interfaces using React and Tailwind CSS for 12+ client websites. Integrated third-party payment gateways (Stripe, PayPal), boosting checkout conversion rates by 10%."
+        }
+    ],
+    "projects": [
+        "TaskFlow (Task Management App)"
+    ],
+    "experience_years": [
+        4,
+        2
+    ]
+}
