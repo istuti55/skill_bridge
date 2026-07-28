@@ -1,0 +1,40 @@
+.companies {
+  padding: 80px 20px;
+  text-align: center;
+  background: white;
+}
+
+.companies h2 {
+  font-size: 2rem;
+  margin-bottom: 40px;
+  color: #1e293b;
+}
+
+.companies-container {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 25px;
+}
+
+.company-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 28px;
+  border-radius: 14px;
+  background: #f8fafc;
+  font-size: 18px;
+  font-weight: 600;
+  transition: 0.3s;
+  cursor: pointer;
+}
+
+.company-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.1);
+}
+
+.icon {
+  font-size: 28px;
+}
