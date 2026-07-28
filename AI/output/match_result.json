@@ -1,0 +1,18 @@
+{
+    "overall_score": 79.39,
+    "matched_skills": [
+        "python",
+        "postgresql",
+        "docker",
+        "aws"
+    ],
+    "missing_skills": [
+        "fastapi"
+    ],
+    "breakdown": {
+        "skill_score": 80.0,
+        "semantic_score": 91.3,
+        "experience_score": 50.0,
+        "education_score": 100.0
+    }
+}
