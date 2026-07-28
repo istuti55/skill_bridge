@@ -1,5 +1,23 @@
+# Virtual environment
+.venv/
 venv/
+
+# Python cache
 __pycache__/
 *.pyc
-db.sqlite3
+
+# Model/cache files
+*.pt
+*.pth
+*.bin
+*.onnx
+
+# Environment variables
 .env
+
+# VS Code
+.vscode/
+
+# Output files
+AI/output/
+output/
