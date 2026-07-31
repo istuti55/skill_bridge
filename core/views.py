@@ -1,14 +1,18 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
+from rest_framework.parsers import MultiPartParser, FormParser
 from django.contrib.auth.hashers import check_password
 from rest_framework_simplejwt.tokens import RefreshToken
-
-from .models import User
-from .serializers import UserRegisterSerializer, UserSerializer
+from django.conf import settings
+import os
 import fitz  # PyMuPDF
+
+from .models import User, Candidate, Company, Job, Application
+from .serializers import UserRegisterSerializer, UserSerializer, JobSerializer, ApplicationSerializer
 from .ai_service import extract_cv_data
+from .ai_bridge import get_match_and_gap
 
 
 class RegisterView(generics.CreateAPIView):
@@ -38,12 +42,6 @@ class LoginView(APIView):
             'access': str(refresh.access_token),
             'user': UserSerializer(user).data
         })
-    
-from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework.permissions import IsAuthenticated
-from .models import Candidate
-import os
-from django.conf import settings
 
 
 class CVUploadView(APIView):
@@ -58,7 +56,6 @@ class CVUploadView(APIView):
         if not file.name.endswith('.pdf'):
             return Response({'error': 'Only PDF files are allowed'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Save file to media/cvs/
         save_dir = os.path.join(settings.MEDIA_ROOT, 'cvs')
         os.makedirs(save_dir, exist_ok=True)
         file_path = os.path.join(save_dir, file.name)
@@ -67,18 +64,16 @@ class CVUploadView(APIView):
             for chunk in file.chunks():
                 destination.write(chunk)
 
-        # Update the candidate's profile with the file path
         candidate = Candidate.objects.get(user=request.user)
-        candidate.cv_file_path = f'media/cvs/{file.name}'
+        candidate.cv_file_path = file_path
         candidate.save()
-        # Extract text from PDF
+
         doc = fitz.open(file_path)
         resume_text = ""
         for page in doc:
             resume_text += page.get_text()
         doc.close()
 
-        # Send to Ollama for structured extraction
         ai_result = extract_cv_data(resume_text)
 
         candidate.extracted_skills = ai_result.get('skills', [])
@@ -90,10 +85,6 @@ class CVUploadView(APIView):
             'message': 'CV uploaded successfully',
             'cv_file_path': candidate.cv_file_path
         }, status=status.HTTP_200_OK)
-    
-from .models import Job, Company, Application
-from .serializers import JobSerializer, ApplicationSerializer
-from rest_framework import permissions
 
 
 class JobListCreateView(generics.ListCreateAPIView):
@@ -140,8 +131,36 @@ class ApplyToJobView(APIView):
         if Application.objects.filter(candidate=candidate, job=job).exists():
             return Response({'error': 'You already applied to this job'}, status=status.HTTP_400_BAD_REQUEST)
 
-        application = Application.objects.create(candidate=candidate, job=job, match_score=0)
-        return Response(ApplicationSerializer(application).data, status=status.HTTP_201_CREATED)
+        doc = fitz.open(candidate.cv_file_path)
+        resume_text = ""
+        for page in doc:
+            resume_text += page.get_text()
+        doc.close()
+
+        candidate_skill_names = [s.get('name') for s in candidate.extracted_skills]
+        job_skill_names = [s.get('name') for s in job.required_skills]
+
+        result = get_match_and_gap(
+            resume_text=resume_text,
+            candidate_skills=candidate_skill_names,
+            candidate_experience=float(candidate.experience_years),
+            candidate_education=candidate.education,
+            job_description_text=job.description or "",
+            job_skills=job_skill_names,
+            job_experience_required=2
+        )
+
+        application = Application.objects.create(
+            candidate=candidate,
+            job=job,
+            match_score=result['overall_score']
+        )
+
+        return Response({
+            **ApplicationSerializer(application).data,
+            'match_breakdown': result['breakdown'],
+            'missing_skills': result['missing_skills']
+        }, status=status.HTTP_201_CREATED)
 
 
 class MyApplicationsView(generics.ListAPIView):
