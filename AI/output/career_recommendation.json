@@ -1,8 +1,0 @@
-{
-    "career": "Full Stack Developer with a focus on Python and API Development",
-    "reason": "The candidate has a strong foundation in web development with skills in JavaScript, TypeScript, React, and HTML/CSS. However, FastAPI is an emerging technology that can help them tap into the latest trends in Python-based API development. Adding FastAPI to their skill set will make them more competitive in the job market.",
-    "roadmap": [
-        "1. Learn FastAPI by completing online courses or tutorials such as https://fastapi.tiangolo.com/ and https://www.fullstackpython.com/fastapi.html",
-        "2. Practice building RESTful APIs using FastAPI and deploy them on AWS or a similar platform to gain hands-on experience."
-    ]
-}
