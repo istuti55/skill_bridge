@@ -1,8 +1,20 @@
 from django.db import models
-from django.contrib.auth.hashers import make_password
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 
 
-class User(models.Model):
+class UserManager(BaseUserManager):
+    def create_user(self, email, password=None, **extra):
+        user = self.model(email=self.normalize_email(email), **extra)
+        user.set_password(password)
+        user.save()
+        return user
+
+    def create_superuser(self, email, password=None, **extra):
+        extra.setdefault('role', 'admin')
+        return self.create_user(email, password, **extra)
+
+
+class User(AbstractBaseUser):
     ROLE_CHOICES = [
         ('candidate', 'Candidate'),
         ('company', 'Company'),
@@ -11,13 +23,14 @@ class User(models.Model):
 
     name = models.CharField(max_length=150)
     email = models.EmailField(max_length=254, unique=True)
-    password_hash = models.CharField(max_length=255)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
     is_active = models.BooleanField(default=True)
     date_joined = models.DateTimeField(auto_now_add=True)
 
-    def set_password(self, raw_password):
-        self.password_hash = make_password(raw_password)
+    objects = UserManager()
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['name']
 
     def __str__(self):
         return f"{self.name} ({self.role})"
