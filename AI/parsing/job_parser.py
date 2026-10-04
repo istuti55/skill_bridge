@@ -1,6 +1,6 @@
 import json
 
-from llm.ollama_client import call_ollama
+from core.ollama_client import call_ollama
 
 
 def parse_job(job_description: str) -> dict:

@@ -1,6 +1,6 @@
 import fitz
 
-from llm.ollama_client import call_ollama
+from core.ollama_client import call_ollama
 
 
 def extract_text(pdf_path: str) -> str:
