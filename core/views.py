@@ -131,23 +131,20 @@ class ApplyToJobView(APIView):
         if Application.objects.filter(candidate=candidate, job=job).exists():
             return Response({'error': 'You already applied to this job'}, status=status.HTTP_400_BAD_REQUEST)
 
-        doc = fitz.open(candidate.cv_file_path)
-        resume_text = ""
-        for page in doc:
-            resume_text += page.get_text()
-        doc.close()
-
-        candidate_skill_names = [s.get('name') for s in candidate.extracted_skills]
-        job_skill_names = [s.get('name') for s in job.required_skills]
+        candidate_skill_names = [
+            s.get('name') if isinstance(s, dict) else s
+            for s in candidate.extracted_skills
+        ]
+        job_skill_names = [
+            s.get('name') if isinstance(s, dict) else s
+            for s in job.required_skills
+        ]
 
         result = get_match_and_gap(
-            resume_text=resume_text,
             candidate_skills=candidate_skill_names,
             candidate_experience=float(candidate.experience_years),
             candidate_education=candidate.education,
-            job_description_text=job.description or "",
             job_skills=job_skill_names,
-            job_experience_required=2
         )
 
         application = Application.objects.create(
