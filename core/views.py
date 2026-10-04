@@ -3,16 +3,16 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
-from django.contrib.auth.hashers import check_password
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.conf import settings
 import os
-import fitz  # PyMuPDF
+import pymupdf as fitz  # PyMuPDF
 
 from .models import User, Candidate, Company, Job, Application
 from .serializers import UserRegisterSerializer, UserSerializer, JobSerializer, ApplicationSerializer
 from .ai_service import extract_cv_data
 from .ai_bridge import get_match_and_gap
+from .permissions import IsCandidate, IsCompany, IsAdmin
 
 
 class RegisterView(generics.CreateAPIView):
@@ -45,7 +45,7 @@ class LoginView(APIView):
 
 
 class CVUploadView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsCandidate]
     parser_classes = [MultiPartParser, FormParser]
 
     def post(self, request):
@@ -89,9 +89,19 @@ class CVUploadView(APIView):
 
 class JobListCreateView(generics.ListCreateAPIView):
     serializer_class = JobSerializer
-    permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        # Anyone logged in can look at jobs, but only a company can post one
+        if self.request.method == 'POST':
+            return [IsCompany()]
+        return [IsAuthenticated()]
 
     def get_queryset(self):
+        user = self.request.user
+        if user.role == 'admin':
+            return Job.objects.all().order_by('-posted_date')
+        if user.role == 'company':
+            return Job.objects.filter(company__user=user).order_by('-posted_date')
         return Job.objects.filter(status='approved').order_by('-posted_date')
 
     def perform_create(self, serializer):
@@ -100,7 +110,7 @@ class JobListCreateView(generics.ListCreateAPIView):
 
 
 class JobApproveView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdmin]
 
     def patch(self, request, pk):
         try:
@@ -118,7 +128,7 @@ class JobApproveView(APIView):
 
 
 class ApplyToJobView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsCandidate]
 
     def post(self, request, pk):
         try:
@@ -162,7 +172,7 @@ class ApplyToJobView(APIView):
 
 class MyApplicationsView(generics.ListAPIView):
     serializer_class = ApplicationSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsCandidate]
 
     def get_queryset(self):
         candidate = Candidate.objects.get(user=self.request.user)
@@ -171,19 +181,23 @@ class MyApplicationsView(generics.ListAPIView):
 
 class JobApplicationsView(generics.ListAPIView):
     serializer_class = ApplicationSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsCompany]
 
     def get_queryset(self):
-        job_id = self.kwargs['pk']
-        return Application.objects.filter(job_id=job_id).order_by('-match_score')
+        # Only applicants of THIS company's own job
+        return Application.objects.filter(
+            job_id=self.kwargs['pk'],
+            job__company__user=self.request.user
+        ).order_by('-match_score')
 
 
 class UpdateApplicationStageView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsCompany]
 
     def patch(self, request, pk):
         try:
-            application = Application.objects.get(pk=pk)
+            # Only applications that belong to this company's own jobs
+            application = Application.objects.get(pk=pk, job__company__user=request.user)
         except Application.DoesNotExist:
             return Response({'error': 'Application not found'}, status=status.HTTP_404_NOT_FOUND)
 
