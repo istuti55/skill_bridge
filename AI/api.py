@@ -1,6 +1,10 @@
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from ai_engine import analyze_candidate
+
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 import os
 import tempfile
@@ -11,6 +15,25 @@ app = FastAPI(
     description="Backend API for SkillBridge AI services",
     version="1.0.0"
 )
+
+
+# --------------------------------------------------
+# Rate Limiting
+# --------------------------------------------------
+
+limiter = Limiter(key_func=get_remote_address)
+
+app.state.limiter = limiter
+
+app.add_exception_handler(
+    RateLimitExceeded,
+    _rate_limit_exceeded_handler
+)
+
+
+# --------------------------------------------------
+# CORS Security
+# --------------------------------------------------
 
 app.add_middleware(
     CORSMiddleware,
@@ -23,6 +46,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+# --------------------------------------------------
+# Security Headers
+# --------------------------------------------------
+
 @app.middleware("http")
 async def add_security_headers(request, call_next):
     response = await call_next(request)
@@ -34,8 +62,17 @@ async def add_security_headers(request, call_next):
 
     return response
 
+
+# --------------------------------------------------
+# File Validation
+# --------------------------------------------------
+
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB
-ALLOWED_EXTENSIONS = {".pdf", ".docx"}
+
+ALLOWED_EXTENSIONS = {
+    ".pdf",
+    ".docx"
+}
 
 
 def is_valid_file_content(extension, file_data):
@@ -55,12 +92,20 @@ def is_valid_file_content(extension, file_data):
     return False
 
 
+# --------------------------------------------------
+# Root Endpoint
+# --------------------------------------------------
+
 @app.get("/")
 def root():
     return {
         "message": "SkillBridge AI API is running"
     }
 
+
+# --------------------------------------------------
+# Health Check
+# --------------------------------------------------
 
 @app.get("/health")
 def health_check():
@@ -69,8 +114,14 @@ def health_check():
     }
 
 
+# --------------------------------------------------
+# Resume Analysis
+# --------------------------------------------------
+
 @app.post("/analyze")
+@limiter.limit("10/minute")
 async def analyze(
+    request: Request,
     resume: UploadFile = File(...),
     job_description: str = Form(...)
 ):
