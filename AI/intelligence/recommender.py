@@ -457,12 +457,19 @@ def _sanitize_learning_path(
 def _build_recommendation_reason(
     detected_roles,
     candidate_skills,
-    learning_priorities
+    learning_priorities,
+    role_scores=None
 ):
     """
     Build a deterministic explanation for the
     career recommendation.
+
+    The explanation is based only on verified
+    candidate skills, role evidence, deterministic
+    role scores, and deterministic learning priorities.
     """
+
+    role_scores = role_scores or []
 
     if detected_roles:
         role_text = ", ".join(
@@ -503,6 +510,50 @@ def _build_recommendation_reason(
         f"Current skills include {skill_text}."
     )
 
+    if role_scores:
+        evidence_parts = []
+
+        for role in role_scores:
+
+            evidence = []
+
+            if role.get("matched_core_skills"):
+                evidence.append(
+                    "core skills: "
+                    + ", ".join(
+                        role["matched_core_skills"]
+                    )
+                )
+
+            if role.get("matched_supporting_skills"):
+                evidence.append(
+                    "supporting skills: "
+                    + ", ".join(
+                        role["matched_supporting_skills"]
+                    )
+                )
+
+            if role.get("matched_evidence"):
+                evidence.append(
+                    "experience/project evidence: "
+                    + ", ".join(
+                        role["matched_evidence"]
+                    )
+                )
+
+            if evidence:
+                evidence_parts.append(
+                    f"{role['role']} "
+                    f"({role['score']}%) is supported by "
+                    + "; ".join(evidence)
+                    + "."
+                )
+
+        if evidence_parts:
+            reason += " " + " ".join(
+                evidence_parts
+            )
+
     if missing_high:
         reason += (
             " The main required skill gap is "
@@ -519,6 +570,159 @@ def _build_recommendation_reason(
         )
 
     return reason
+
+
+def _build_structured_explanation(
+    detected_roles,
+    role_scores,
+    candidate_skills,
+    learning_priorities
+):
+    """
+    Build deterministic structured explainability
+    for career recommendations.
+
+    No LLM-generated facts are used here.
+    """
+
+    role_reasons = []
+
+    for role in role_scores:
+
+        core_skills = role.get(
+            "matched_core_skills",
+            []
+        )
+
+        supporting_skills = role.get(
+            "matched_supporting_skills",
+            []
+        )
+
+        evidence = role.get(
+            "matched_evidence",
+            []
+        )
+
+        evidence_parts = []
+
+        if core_skills:
+            evidence_parts.append(
+                "core skills: "
+                + ", ".join(core_skills)
+            )
+
+        if supporting_skills:
+            evidence_parts.append(
+                "supporting skills: "
+                + ", ".join(supporting_skills)
+            )
+
+        if evidence:
+            evidence_parts.append(
+                "experience/project evidence: "
+                + ", ".join(evidence)
+            )
+
+        if evidence_parts:
+            role_reason = (
+                f"{role['role']} scored "
+                f"{role['score']}% based on "
+                + "; ".join(evidence_parts)
+                + "."
+            )
+        else:
+            role_reason = (
+                f"{role['role']} scored "
+                f"{role['score']}% based on "
+                "the available candidate information."
+            )
+
+        role_reasons.append({
+            "role": role["role"],
+            "score": role["score"],
+            "core_skills": core_skills,
+            "supporting_skills": supporting_skills,
+            "evidence": evidence,
+            "reason": role_reason
+        })
+
+    high_priority = [
+        item["skill"]
+        for item in learning_priorities
+        if item["priority"] == "high"
+    ]
+
+    medium_priority = [
+        item["skill"]
+        for item in learning_priorities
+        if item["priority"] == "medium"
+    ]
+
+    if high_priority:
+        skill_reason = (
+            "The main required skill gap is "
+            + ", ".join(high_priority)
+            + "."
+        )
+    elif medium_priority:
+        skill_reason = (
+            "The main identified preferred skill "
+            "gaps are "
+            + ", ".join(medium_priority)
+            + "."
+        )
+    else:
+        skill_reason = (
+            "No additional skill gaps were identified "
+            "for the current recommendation."
+        )
+
+    if learning_priorities:
+
+        learning_reason_parts = []
+
+        for item in learning_priorities:
+
+            learning_reason_parts.append(
+                f"{item['skill']} "
+                f"({item['priority']} priority)"
+            )
+
+        learning_reason = (
+            "The learning direction focuses on "
+            + ", ".join(
+                learning_reason_parts
+            )
+            + "."
+        )
+
+    else:
+        learning_reason = (
+            "No additional learning priorities "
+            "were identified."
+        )
+
+    if detected_roles:
+        summary = (
+            "The recommendation is based on the "
+            "candidate's verified skills, role evidence, "
+            "and identified skill gaps. Recommended roles: "
+            + ", ".join(detected_roles)
+            + "."
+        )
+    else:
+        summary = (
+            "No career roles could be determined "
+            "from the available candidate information."
+        )
+
+    return {
+        "summary": summary,
+        "role_reasons": role_reasons,
+        "skill_reason": skill_reason,
+        "learning_reason": learning_reason
+    }
 
 
 def generate_career_recommendation(
@@ -595,11 +799,6 @@ def generate_career_recommendation(
 
     # -------------------------------------------------
     # EMPTY CANDIDATE SAFETY HANDLING
-    #
-    # An empty candidate should not depend on Ollama.
-    # There are no detected roles, no learning
-    # priorities, and therefore no useful LLM work
-    # to perform.
     # -------------------------------------------------
 
     if (
@@ -618,7 +817,23 @@ def generate_career_recommendation(
             "reason": (
                 "Insufficient candidate information "
                 "to generate a career recommendation."
-            )
+            ),
+            "explanation": {
+                "summary": (
+                    "Insufficient candidate information "
+                    "to generate a career recommendation."
+                ),
+                "role_reasons": [],
+                "skill_reason": (
+                    "No skill-gap analysis could be "
+                    "performed because candidate "
+                    "information is insufficient."
+                ),
+                "learning_reason": (
+                    "No learning priorities could be "
+                    "determined."
+                )
+            }
         }
 
     prompt = f"""
@@ -757,9 +972,6 @@ IMPORTANT RULES:
 
     # -------------------------------------------------
     # Deterministic career-role enforcement
-    #
-    # Ollama cannot add, remove, or invent roles.
-    # The deterministic role engine is authoritative.
     # -------------------------------------------------
 
     recommendation[
@@ -776,9 +988,6 @@ IMPORTANT RULES:
 
     # -------------------------------------------------
     # Deterministic learning-path enforcement
-    #
-    # Ollama can generate topics, but it cannot
-    # add/remove/change the authoritative skills.
     # -------------------------------------------------
 
     recommendation[
@@ -793,15 +1002,26 @@ IMPORTANT RULES:
 
     # -------------------------------------------------
     # Deterministic recommendation explanation
-    #
-    # The reason is generated from verified
-    # deterministic role and skill-gap results.
     # -------------------------------------------------
 
     recommendation[
         "reason"
     ] = _build_recommendation_reason(
         detected_roles,
+        candidate_skills,
+        sanitized_priorities,
+        top_roles
+    )
+
+    # -------------------------------------------------
+    # Deterministic structured explainability
+    # -------------------------------------------------
+
+    recommendation[
+        "explanation"
+    ] = _build_structured_explanation(
+        detected_roles,
+        top_roles,
         candidate_skills,
         sanitized_priorities
     )

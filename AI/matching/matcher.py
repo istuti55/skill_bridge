@@ -33,18 +33,13 @@ def semantic_skill_match(candidate_skills, job_skills):
             "semantic_matches": []
         }
 
-    # Conservative threshold.
-    # Prevents loosely related technologies from being
-    # incorrectly treated as equivalent skills.
     SEMANTIC_THRESHOLD = 0.75
 
-    # Create one embedding for each candidate skill.
     candidate_embeddings = {
         skill: create_embedding(skill)
         for skill in candidate_skills
     }
 
-    # Create one embedding for each job skill.
     job_embeddings = {
         skill: create_embedding(skill)
         for skill in job_skills
@@ -75,7 +70,6 @@ def semantic_skill_match(candidate_skills, job_skills):
                 best_similarity = similarity
                 best_candidate = candidate_skill
 
-        # Accept only strong semantic relationships.
         if (
             best_candidate is not None
             and best_similarity >= SEMANTIC_THRESHOLD
@@ -88,8 +82,6 @@ def semantic_skill_match(candidate_skills, job_skills):
 
             used_candidate_skills.add(best_candidate)
 
-    # Semantic score is based on how many job skills
-    # received a reliable semantic match.
     if not job_skills:
         score = 0.0
     else:
@@ -111,17 +103,6 @@ def hybrid_match(candidate_skills, job_skills):
     Exact matching is performed first.
     Semantic matching is then used only for
     skills that were not matched exactly.
-
-    The final hybrid score represents total
-    job-skill coverage:
-
-        exact matches + semantic matches
-        -------------------------------- × 100
-              total job skills
-
-    This prevents exact matches from being
-    incorrectly penalized when no semantic
-    matches are needed.
     """
 
     normalized_candidate_skills = normalize_skills(
@@ -189,7 +170,6 @@ def hybrid_match(candidate_skills, job_skills):
 
     if total_job_skills == 0:
         hybrid_score = 0.0
-
     else:
         hybrid_score = (
             total_matched
@@ -215,13 +195,10 @@ def hybrid_match(candidate_skills, job_skills):
 
     for match in semantic_result["semantic_matches"]:
 
-        candidate_skill = match["candidate_skill"]
         job_skill = match["job_skill"]
 
-        # The job skill is now considered matched.
         matched_skills.add(job_skill)
 
-        # Remove it from missing skills.
         if job_skill in missing_skills:
             missing_skills.remove(job_skill)
 
@@ -236,6 +213,181 @@ def hybrid_match(candidate_skills, job_skills):
         "matched_skills": sorted(matched_skills),
         "missing_skills": sorted(missing_skills),
         "semantic_matches": semantic_result["semantic_matches"]
+    }
+
+
+def _build_match_explanation(
+    matched_skills,
+    missing_skills,
+    skill_score,
+    experience_score,
+    education_score,
+    overall_score,
+    recommendation,
+    required_skills,
+    preferred_skills,
+    required_experience,
+    required_education
+):
+    """
+    Build a deterministic explanation for the match result.
+
+    Explanations are generated only from existing matching
+    results and input data. No external AI generation is used.
+    """
+
+    # ==========================================================
+    # SKILL EXPLANATION
+    # ==========================================================
+
+    if matched_skills:
+        matched_skill_reason = (
+            "Matched skills: "
+            + ", ".join(matched_skills)
+            + "."
+        )
+    else:
+        matched_skill_reason = (
+            "No required or preferred skills were matched."
+        )
+
+    if missing_skills:
+        missing_skill_reason = (
+            "Missing skills: "
+            + ", ".join(missing_skills)
+            + "."
+        )
+    else:
+        missing_skill_reason = (
+            "No required or preferred skills are missing."
+        )
+
+    if required_skills and preferred_skills:
+        skill_weight_reason = (
+            "The skill score combines required skills at 80% "
+            "and preferred skills at 20%."
+        )
+    elif required_skills:
+        skill_weight_reason = (
+            "The skill score is based on required skill coverage."
+        )
+    elif preferred_skills:
+        skill_weight_reason = (
+            "The skill score is based on preferred skill coverage."
+        )
+    else:
+        skill_weight_reason = (
+            "No job skills were provided for matching."
+        )
+
+    # ==========================================================
+    # EXPERIENCE EXPLANATION
+    # ==========================================================
+
+    try:
+        required_experience_value = float(
+            required_experience
+        )
+    except (TypeError, ValueError):
+        required_experience_value = 0.0
+
+    if required_experience_value <= 0:
+        experience_reason = (
+            "No minimum experience requirement was provided, "
+            "so the experience requirement is considered satisfied."
+        )
+
+    elif experience_score >= 100:
+        experience_reason = (
+            "The candidate meets or exceeds the required "
+            "experience level."
+        )
+
+    elif experience_score > 0:
+        experience_reason = (
+            "The candidate has some relevant experience, "
+            "but does not fully meet the required experience level."
+        )
+
+    else:
+        experience_reason = (
+            "The experience requirement was not satisfied "
+            "or valid candidate experience was unavailable."
+        )
+
+    # ==========================================================
+    # EDUCATION EXPLANATION
+    # ==========================================================
+
+    if not required_education:
+        education_reason = (
+            "No education requirement was provided, "
+            "so the education requirement is considered satisfied."
+        )
+
+    elif education_score >= 100:
+        education_reason = (
+            "The candidate's education fully satisfies "
+            "the education requirement."
+        )
+
+    elif education_score > 0:
+        education_reason = (
+            "The candidate's education partially satisfies "
+            "the education requirement."
+        )
+
+    else:
+        education_reason = (
+            "The education requirement was not satisfied "
+            "or valid candidate education was unavailable."
+        )
+
+    # ==========================================================
+    # OVERALL SUMMARY
+    # ==========================================================
+
+    if recommendation == "Strong Match":
+        summary = (
+            f"Strong Match with an overall score of "
+            f"{overall_score}%. The candidate has strong "
+            f"alignment with the job requirements."
+        )
+
+    elif recommendation == "Moderate Match":
+        summary = (
+            f"Moderate Match with an overall score of "
+            f"{overall_score}%. The candidate meets some "
+            f"important requirements but has areas to improve."
+        )
+
+    else:
+        summary = (
+            f"Weak Match with an overall score of "
+            f"{overall_score}%. Several job requirements "
+            f"are not sufficiently satisfied."
+        )
+
+    # ==========================================================
+    # FINAL EXPLANATION
+    # ==========================================================
+
+    return {
+        "summary": summary,
+        "skill_reason": (
+            f"Skill score: {skill_score}%. "
+            f"{skill_weight_reason}"
+        ),
+        "matched_skill_reason": matched_skill_reason,
+        "missing_skill_reason": missing_skill_reason,
+        "experience_reason": (
+            f"Experience score: {experience_score}%. "
+            f"{experience_reason}"
+        ),
+        "education_reason": (
+            f"Education score: {education_score}%. "
+            f"{education_reason}"
+        )
     }
 
 
@@ -262,6 +414,9 @@ def complete_match(
         Skills      = 70%
         Experience  = 20%
         Education   = 10%
+
+    The result also contains a deterministic explanation
+    of why the candidate received the calculated score.
     """
 
     # ==========================================================
@@ -289,9 +444,6 @@ def complete_match(
     # ==========================================================
     # 3. REQUIRED vs PREFERRED WEIGHTING
     # ==========================================================
-
-    # Required skills = 80%
-    # Preferred skills = 20%
 
     skill_score = (
         required_score * 0.80
@@ -364,7 +516,25 @@ def complete_match(
         recommendation = "Weak Match"
 
     # ==========================================================
-    # 9. FINAL RESULT
+    # 9. EXPLAINABILITY
+    # ==========================================================
+
+    explanation = _build_match_explanation(
+        matched_skills=matched_skills,
+        missing_skills=missing_skills,
+        skill_score=skill_score,
+        experience_score=experience_score,
+        education_score=education_score,
+        overall_score=overall_score,
+        recommendation=recommendation,
+        required_skills=required_skills,
+        preferred_skills=preferred_skills,
+        required_experience=required_experience,
+        required_education=required_education
+    )
+
+    # ==========================================================
+    # 10. FINAL RESULT
     # ==========================================================
 
     return {
@@ -374,5 +544,6 @@ def complete_match(
         "education_score": education_score,
         "matched_skills": matched_skills,
         "missing_skills": missing_skills,
-        "recommendation": recommendation
+        "recommendation": recommendation,
+        "explanation": explanation
     }

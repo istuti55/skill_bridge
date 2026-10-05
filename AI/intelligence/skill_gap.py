@@ -13,6 +13,7 @@ def analyze_required_skill_gap(
         - matched required skills
         - missing required skills
         - required skill gap percentage
+        - explanation
     """
 
     candidate = {
@@ -42,13 +43,56 @@ def analyze_required_skill_gap(
             len(missing) / len(required)
         ) * 100
 
+    if not required:
+        summary = (
+            "No required skills were provided for this job."
+        )
+
+    elif not missing:
+        summary = (
+            "The candidate has all required skills."
+        )
+
+    else:
+        summary = (
+            f"The candidate is missing {len(missing)} "
+            f"of {len(required)} required skills."
+        )
+
+    if matched:
+        matched_reason = (
+            "Matched required skills: "
+            + ", ".join(matched)
+            + "."
+        )
+    else:
+        matched_reason = (
+            "No required skills were matched."
+        )
+
+    if missing:
+        missing_reason = (
+            "Missing required skills: "
+            + ", ".join(missing)
+            + "."
+        )
+    else:
+        missing_reason = (
+            "No required skills are missing."
+        )
+
     return {
         "matched_skills": matched,
         "missing_skills": missing,
         "skill_gap_percentage": round(
             gap_percentage,
             2
-        )
+        ),
+        "explanation": {
+            "summary": summary,
+            "matched_reason": matched_reason,
+            "missing_reason": missing_reason
+        }
     }
 
 
@@ -68,6 +112,7 @@ def analyze_preferred_skill_gap(
         - matched preferred skills
         - missing preferred skills
         - preferred skill gap percentage
+        - explanation
     """
 
     candidate = {
@@ -97,13 +142,56 @@ def analyze_preferred_skill_gap(
             len(missing) / len(preferred)
         ) * 100
 
+    if not preferred:
+        summary = (
+            "No preferred skills were provided for this job."
+        )
+
+    elif not missing:
+        summary = (
+            "The candidate has all preferred skills."
+        )
+
+    else:
+        summary = (
+            f"The candidate is missing {len(missing)} "
+            f"of {len(preferred)} preferred skills."
+        )
+
+    if matched:
+        matched_reason = (
+            "Matched preferred skills: "
+            + ", ".join(matched)
+            + "."
+        )
+    else:
+        matched_reason = (
+            "No preferred skills were matched."
+        )
+
+    if missing:
+        missing_reason = (
+            "Missing preferred skills: "
+            + ", ".join(missing)
+            + "."
+        )
+    else:
+        missing_reason = (
+            "No preferred skills are missing."
+        )
+
     return {
         "matched_skills": matched,
         "missing_skills": missing,
         "skill_gap_percentage": round(
             gap_percentage,
             2
-        )
+        ),
+        "explanation": {
+            "summary": summary,
+            "matched_reason": matched_reason,
+            "missing_reason": missing_reason
+        }
     }
 
 
@@ -137,6 +225,7 @@ def prioritize_missing_skills(
         priorities.append({
             "skill": normalized_skill,
             "priority": "high",
+            "status": "missing",
             "reason": (
                 "Required skill missing from "
                 "candidate profile."
@@ -153,6 +242,7 @@ def prioritize_missing_skills(
         priorities.append({
             "skill": normalized_skill,
             "priority": "medium",
+            "status": "missing",
             "reason": (
                 "Preferred skill missing from "
                 "candidate profile."
@@ -160,3 +250,17 @@ def prioritize_missing_skills(
         })
 
     return priorities
+def analyze_skill_gap(
+    candidate_skills,
+    job_skills
+):
+    """
+    Backward-compatible skill-gap analysis.
+
+    Treats job_skills as required skills.
+    """
+
+    return analyze_required_skill_gap(
+        candidate_skills,
+        job_skills
+    )
