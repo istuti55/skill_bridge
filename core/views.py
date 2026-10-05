@@ -227,3 +227,53 @@ class MyProfileView(APIView):
             'experience_years': float(candidate.experience_years),
             'resume_score': candidate.resume_score,
         })
+
+
+class JobMatchView(APIView):
+    permission_classes = [IsCandidate]
+
+    def get(self, request, pk):
+        try:
+            job = Job.objects.get(pk=pk, status='approved')
+        except Job.DoesNotExist:
+            return Response({'error': 'Job not found or not approved'}, status=status.HTTP_404_NOT_FOUND)
+
+        candidate = Candidate.objects.get(user=request.user)
+
+        candidate_skill_names = [
+            s.get('name') if isinstance(s, dict) else s
+            for s in candidate.extracted_skills
+        ]
+        job_skill_names = [
+            s.get('name') if isinstance(s, dict) else s
+            for s in job.required_skills
+        ]
+
+        result = get_match_and_gap(
+            candidate_skills=candidate_skill_names,
+            candidate_experience=float(candidate.experience_years),
+            candidate_education=candidate.education,
+            job_skills=job_skill_names,
+        )
+
+        matched = {m.lower().strip() for m in result['matched_skills']}
+
+        breakdown = []
+        for skill in job.required_skills:
+            name = skill.get('name') if isinstance(skill, dict) else skill
+            weight = skill.get('weight') if isinstance(skill, dict) else None
+            has_skill = bool(name) and name.lower().strip() in matched
+            breakdown.append({
+                'skill': name,
+                'candidate_has': has_skill,
+                'weight': weight,
+                'status': 'strong' if has_skill else 'missing',
+            })
+
+        return Response({
+            'job_id': job.id,
+            'match_score': result['overall_score'],
+            'breakdown': breakdown,
+            'scores': result['breakdown'],
+        })
+        
