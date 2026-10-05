@@ -11,13 +11,14 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import User, Candidate, Company, Job, Application, SkillGap, Notification
+from .models import User, Candidate, Company, Job, Application, SkillGap, Notification, JobMatch
 from .serializers import UserRegisterSerializer, UserSerializer, JobSerializer, ApplicationSerializer
 from .ai_service import extract_cv_data, AIServiceError
 from .ai_bridge import get_match_and_gap, get_skill_gap, get_career_recommendation, normalize_skill
 from .permissions import IsCandidate, IsCompany, IsAdmin
 from .scoring import calculate_resume_score
 from .resources import get_resource_links, estimate_weeks
+from .matching_service import run_bulk_match, match_candidate_to_live_jobs
 
 MAX_CV_SIZE = 5 * 1024 * 1024  # 5 MB
 
@@ -133,6 +134,9 @@ class CVUploadView(APIView):
         candidate.resume_score = calculate_resume_score(skills, education, experience, has_cv=True)
         candidate.save()
 
+        # Refresh this candidate's scores against every live job
+        match_candidate_to_live_jobs(candidate)
+
         return Response({
             'message': 'CV uploaded successfully',
             'cv_file_path': f"{settings.MEDIA_URL}{candidate.cv_file_path}",
@@ -177,7 +181,13 @@ class JobApproveView(APIView):
 
         job.status = new_status
         job.save()
-        return Response(JobSerializer(job).data)
+
+        # Job is live: automatically match all registered candidates
+        matched = run_bulk_match(job) if new_status == 'approved' else 0
+
+        data = JobSerializer(job).data
+        data['candidates_matched'] = matched
+        return Response(data)
 
 
 class ApplyToJobView(APIView):
@@ -329,22 +339,31 @@ class RankedCandidatesView(APIView):
         except Job.DoesNotExist:
             return Response({'error': 'Job not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        applications = (
-            Application.objects
+        applications = {
+            a.candidate_id: a
+            for a in Application.objects.filter(job=job)
+        }
+        matches = (
+            JobMatch.objects
             .filter(job=job)
             .select_related('candidate__user')
             .order_by('-match_score')
         )
 
-        return Response([
-            {
-                'candidate_id': app.candidate.id,
-                'name': app.candidate.user.name,
-                'match_score': float(app.match_score),
-                'recruitment_stage': app.recruitment_stage,
-            }
-            for app in applications
-        ])
+        results = []
+        for m in matches:
+            app = applications.get(m.candidate_id)
+            results.append({
+                'candidate_id': m.candidate_id,
+                'name': m.candidate.user.name,
+                'match_score': float(m.match_score),
+                'matched_skills': m.matched_skills,
+                'missing_skills': m.missing_skills,
+                'applied': app is not None,
+                'application_id': app.id if app else None,
+                'recruitment_stage': app.recruitment_stage if app else None,
+            })
+        return Response(results)
 
 
 class SkillGapView(APIView):

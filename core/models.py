@@ -131,3 +131,20 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"{self.user.name}: {self.message}"
+
+
+class JobMatch(models.Model):
+    """Bulk-match result: every candidate scored against every live job."""
+    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='matches')
+    candidate = models.ForeignKey(Candidate, on_delete=models.CASCADE, related_name='job_matches')
+    match_score = models.DecimalField(max_digits=5, decimal_places=2)
+    matched_skills = models.JSONField(default=list)
+    missing_skills = models.JSONField(default=list)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('job', 'candidate')
+        indexes = [models.Index(fields=['job', '-match_score'])]
+
+    def __str__(self):
+        return f"{self.candidate.user.name} ~ {self.job.title}: {self.match_score}"

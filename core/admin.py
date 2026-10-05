@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import User, Candidate, Company, Job, Application, SkillGap, Notification
+from .models import User, Candidate, Company, Job, Application, SkillGap, Notification, JobMatch
 
 
 @admin.register(User)
@@ -32,7 +32,11 @@ class CompanyAdmin(admin.ModelAdmin):
 
 @admin.action(description='Approve selected jobs')
 def approve_jobs(modeladmin, request, queryset):
-    queryset.update(status='approved')
+    from .matching_service import run_bulk_match
+    for job in queryset:
+        job.status = 'approved'
+        job.save()
+        run_bulk_match(job)
 
 
 @admin.action(description='Reject selected jobs')
@@ -64,3 +68,8 @@ class SkillGapAdmin(admin.ModelAdmin):
 class NotificationAdmin(admin.ModelAdmin):
     list_display = ('user', 'message', 'is_read', 'created_at')
     list_filter = ('is_read',)
+
+
+@admin.register(JobMatch)
+class JobMatchAdmin(admin.ModelAdmin):
+    list_display = ('candidate', 'job', 'match_score', 'updated_at')
