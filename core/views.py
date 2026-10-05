@@ -8,7 +8,7 @@ from django.conf import settings
 import os
 import pymupdf as fitz  # PyMuPDF
 
-from .models import User, Candidate, Company, Job, Application, SkillGap
+from .models import User, Candidate, Company, Job, Application, SkillGap , Notification
 from .serializers import UserRegisterSerializer, UserSerializer, JobSerializer, ApplicationSerializer
 from .ai_service import extract_cv_data
 from .ai_bridge import get_match_and_gap, get_skill_gap, get_career_recommendation
@@ -428,3 +428,70 @@ def get_career_recommendation(candidate_skills, experience, education, missing_s
     return generate_career_recommendation(
         candidate_skills, experience, education, missing_skills
     )
+STAGE_MESSAGES = {
+    'shortlisted': 'You have been shortlisted for {job}.',
+    'interview_scheduled': 'An interview has been scheduled for {job}.',
+    'offer_extended': 'You have received an offer for {job}.',
+    'hired': 'Congratulations! You have been hired for {job}.',
+    'rejected': 'Your application for {job} was not successful.',
+}
+
+
+class UpdateApplicationStageView(APIView):
+    permission_classes = [IsCompany]
+
+    def patch(self, request, pk):
+        try:
+            application = Application.objects.get(pk=pk, job__company__user=request.user)
+        except Application.DoesNotExist:
+            return Response({'error': 'Application not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        new_stage = request.data.get('recruitment_stage')
+        valid_stages = [choice[0] for choice in Application.STAGE_CHOICES]
+        if new_stage not in valid_stages:
+            return Response({'error': 'Invalid stage'}, status=status.HTTP_400_BAD_REQUEST)
+
+        old_stage = application.recruitment_stage
+        application.recruitment_stage = new_stage
+        if request.data.get('interview_date'):
+            application.interview_date = request.data.get('interview_date')
+        if request.data.get('rejection_reason'):
+            application.rejection_reason = request.data.get('rejection_reason')
+        application.save()
+
+        # Tell the candidate, but only when the stage really changed
+        if new_stage != old_stage and new_stage in STAGE_MESSAGES:
+            Notification.objects.create(
+                user=application.candidate.user,
+                message=STAGE_MESSAGES[new_stage].format(job=application.job.title),
+            )
+
+        return Response(ApplicationSerializer(application).data)
+class NotificationListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        notes = Notification.objects.filter(user=request.user).order_by('-created_at')
+        return Response([
+            {
+                'id': n.id,
+                'message': n.message,
+                'is_read': n.is_read,
+                'created_at': n.created_at,
+            }
+            for n in notes
+        ])
+
+
+class NotificationReadView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, pk):
+        try:
+            note = Notification.objects.get(pk=pk, user=request.user)
+        except Notification.DoesNotExist:
+            return Response({'error': 'Notification not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        note.is_read = True
+        note.save()
+        return Response({'id': note.id, 'is_read': True})
