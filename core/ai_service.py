@@ -63,3 +63,41 @@ Resume text:
         raise AIServiceError("Could not parse the AI response.")
 
     return data
+import json
+
+import requests
+from django.conf import settings
+
+OLLAMA_URL = getattr(settings, 'OLLAMA_URL', "http://localhost:11434/api/generate")
+OLLAMA_MODEL = getattr(settings, 'OLLAMA_MODEL', "llama3")
+OLLAMA_TIMEOUT = 120  # seconds
+def generate_gap_narrative(job_title, strong, weak, missing):
+    """Short friendly summary of a skill gap report. Raises AIServiceError if AI is down."""
+    prompt = f"""
+You are a career coach. Write a short summary (3 to 4 sentences, plain text, no lists)
+of how ready a candidate is for the job "{job_title}".
+
+Skills the candidate is strong in: {strong or 'none'}
+Skills where the candidate needs more depth: {weak or 'none'}
+Skills the candidate is missing: {missing or 'none'}
+
+Be encouraging but honest. Do not invent skills or experience.
+"""
+    try:
+        response = requests.post(
+            OLLAMA_URL,
+            json={"model": OLLAMA_MODEL, "prompt": prompt, "stream": False},
+            timeout=OLLAMA_TIMEOUT,
+        )
+        response.raise_for_status()
+        text = response.json().get("response", "").strip()
+    except requests.exceptions.Timeout:
+        raise AIServiceError("The AI service took too long to respond.")
+    except requests.exceptions.RequestException:
+        raise AIServiceError("The AI service is not available. Make sure Ollama is running.")
+    except ValueError:
+        raise AIServiceError("The AI service returned an invalid response.")
+
+    if not text:
+        raise AIServiceError("The AI service returned an empty response.")
+    return text

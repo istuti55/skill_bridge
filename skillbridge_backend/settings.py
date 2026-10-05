@@ -34,6 +34,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -108,6 +109,7 @@ USE_TZ = True
 # Static and media files
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
@@ -122,13 +124,24 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+    # Safe default: every endpoint needs a login unless it says otherwise
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
 }
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
 }
 
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:3000',
-    'http://localhost:5173',
-]
+# Add your deployed frontend in .env, e.g.
+# CORS_ORIGINS=http://localhost:5173,https://skillbridge.vercel.app
+CORS_ALLOWED_ORIGINS = config(
+    'CORS_ORIGINS',
+    default='http://localhost:3000,http://localhost:5173',
+    cast=Csv(),
+)
+
+# Ollama (local AI): one place to configure it
+OLLAMA_URL = config('OLLAMA_URL', default='http://localhost:11434/api/generate')
+OLLAMA_MODEL = config('OLLAMA_MODEL', default='llama3')

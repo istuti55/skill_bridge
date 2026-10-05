@@ -11,14 +11,16 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import User, Candidate, Company, Job, Application, SkillGap, Notification, JobMatch
+from .models import User, Candidate, Job, Application, SkillGap, Notification, JobMatch
 from .serializers import UserRegisterSerializer, UserSerializer, JobSerializer, ApplicationSerializer
-from .ai_service import extract_cv_data, AIServiceError
-from .ai_bridge import get_match_and_gap, get_skill_gap, get_career_recommendation, normalize_skill
+from .ai_service import extract_cv_data, generate_gap_narrative, AIServiceError
+from .ai_bridge import get_skill_gap, get_career_recommendation
+from .analysis import gap_summary
+from .matching_service import evaluate, run_bulk_match, match_candidate_to_live_jobs, _names
 from .permissions import IsCandidate, IsCompany, IsAdmin
-from .scoring import calculate_resume_score
+from .pipeline import transition_error, parse_interview_date
+from .scoring import calculate_resume_score, resume_suggestions
 from .resources import get_resource_links, estimate_weeks
-from .matching_service import run_bulk_match, match_candidate_to_live_jobs
 
 MAX_CV_SIZE = 5 * 1024 * 1024  # 5 MB
 
@@ -30,6 +32,8 @@ STAGE_MESSAGES = {
     'rejected': 'Your application for {job} was not successful.',
 }
 
+
+# ---------------- Auth ----------------
 
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -60,6 +64,8 @@ class LoginView(APIView):
         })
 
 
+# ---------------- Candidate: CV and profile ----------------
+
 class CVUploadView(APIView):
     permission_classes = [IsCandidate]
     parser_classes = [MultiPartParser, FormParser]
@@ -69,7 +75,6 @@ class CVUploadView(APIView):
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 1. Check extension, size, and that it is a real PDF
         if not file.name.lower().endswith('.pdf'):
             return Response({'error': 'Only PDF files are allowed'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -82,7 +87,6 @@ class CVUploadView(APIView):
 
         candidate = get_object_or_404(Candidate, user=request.user)
 
-        # 2. Save with a safe, unique name (never use the uploaded name)
         save_dir = os.path.join(settings.MEDIA_ROOT, 'cvs')
         os.makedirs(save_dir, exist_ok=True)
         safe_name = f"{request.user.id}_{uuid.uuid4().hex}.pdf"
@@ -92,7 +96,6 @@ class CVUploadView(APIView):
             for chunk in file.chunks():
                 destination.write(chunk)
 
-        # 3. Read the text. If anything fails, delete the file again.
         try:
             doc = fitz.open(full_path)
             resume_text = "".join(page.get_text() for page in doc)
@@ -108,7 +111,6 @@ class CVUploadView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # 4. Ask the AI. If it fails, keep the old profile untouched.
         try:
             ai_result = extract_cv_data(resume_text)
         except AIServiceError as e:
@@ -126,7 +128,6 @@ class CVUploadView(APIView):
         education = education if isinstance(education, list) else []
         experience = max(0, min(experience, 99.9))
 
-        # 5. Save to the candidate (relative path, not the server path)
         candidate.cv_file_path = f"cvs/{safe_name}"
         candidate.extracted_skills = skills
         candidate.education = education
@@ -141,30 +142,40 @@ class CVUploadView(APIView):
             'message': 'CV uploaded successfully',
             'cv_file_path': f"{settings.MEDIA_URL}{candidate.cv_file_path}",
             'resume_score': candidate.resume_score,
+            'suggestions': resume_suggestions(skills, education, experience, has_cv=True),
         }, status=status.HTTP_200_OK)
 
 
-class JobListCreateView(generics.ListCreateAPIView):
-    serializer_class = JobSerializer
+class MyProfileView(APIView):
+    permission_classes = [IsCandidate]
 
-    def get_permissions(self):
-        # Anyone logged in can look at jobs, but only a company can post one
-        if self.request.method == 'POST':
-            return [IsCompany()]
-        return [IsAuthenticated()]
+    def get(self, request):
+        candidate = get_object_or_404(Candidate, user=request.user)
 
-    def get_queryset(self):
-        user = self.request.user
-        if user.role == 'admin':
-            return Job.objects.all().order_by('-posted_date')
-        if user.role == 'company':
-            return Job.objects.filter(company__user=user).order_by('-posted_date')
-        return Job.objects.filter(status='approved').order_by('-posted_date')
+        if candidate.resume_score is None and candidate.extracted_skills:
+            candidate.resume_score = calculate_resume_score(
+                candidate.extracted_skills,
+                candidate.education,
+                candidate.experience_years,
+                has_cv=bool(candidate.cv_file_path),
+            )
+            candidate.save()
 
-    def perform_create(self, serializer):
-        company = get_object_or_404(Company, user=self.request.user)
-        serializer.save(company=company)
+        cv_path = candidate.cv_file_path
+        return Response({
+            'cv_file_path': f"{settings.MEDIA_URL}{cv_path}" if cv_path else '',
+            'extracted_skills': candidate.extracted_skills,
+            'education': candidate.education,
+            'experience_years': float(candidate.experience_years),
+            'resume_score': candidate.resume_score,
+            'suggestions': resume_suggestions(
+                candidate.extracted_skills, candidate.education,
+                candidate.experience_years, has_cv=bool(cv_path)),
+        })
 
+
+# ---------------- Jobs: admin approval ----------------
+# (listing / creating / editing jobs lives in company_views.py)
 
 class JobApproveView(APIView):
     permission_classes = [IsAdmin]
@@ -190,6 +201,8 @@ class JobApproveView(APIView):
         return Response(data)
 
 
+# ---------------- Applications and pipeline ----------------
+
 class ApplyToJobView(APIView):
     permission_classes = [IsCandidate]
 
@@ -204,21 +217,7 @@ class ApplyToJobView(APIView):
         if Application.objects.filter(candidate=candidate, job=job).exists():
             return Response({'error': 'You already applied to this job'}, status=status.HTTP_400_BAD_REQUEST)
 
-        candidate_skill_names = [
-            s.get('name') if isinstance(s, dict) else s
-            for s in candidate.extracted_skills
-        ]
-        job_skill_names = [
-            s.get('name') if isinstance(s, dict) else s
-            for s in job.required_skills
-        ]
-
-        result = get_match_and_gap(
-            candidate_skills=candidate_skill_names,
-            candidate_experience=float(candidate.experience_years),
-            candidate_education=candidate.education,
-            job_skills=job_skill_names,
-        )
+        result, _ = evaluate(candidate, job)
 
         application = Application.objects.create(
             candidate=candidate,
@@ -247,38 +246,56 @@ class JobApplicationsView(generics.ListAPIView):
     permission_classes = [IsCompany]
 
     def get_queryset(self):
-        # Only applicants of THIS company's own job
         return Application.objects.filter(
             job_id=self.kwargs['pk'],
             job__company__user=self.request.user
         ).order_by('-match_score')
 
 
-class MyProfileView(APIView):
-    permission_classes = [IsCandidate]
+class UpdateApplicationStageView(APIView):
+    permission_classes = [IsCompany]
 
-    def get(self, request):
-        candidate = get_object_or_404(Candidate, user=request.user)
+    def patch(self, request, pk):
+        try:
+            application = Application.objects.select_related('job').get(
+                pk=pk, job__company__user=request.user)
+        except Application.DoesNotExist:
+            return Response({'error': 'Application not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        # Older profiles uploaded before scoring existed: calculate it now
-        if candidate.resume_score is None and candidate.extracted_skills:
-            candidate.resume_score = calculate_resume_score(
-                candidate.extracted_skills,
-                candidate.education,
-                candidate.experience_years,
-                has_cv=bool(candidate.cv_file_path),
+        new_stage = request.data.get('recruitment_stage')
+        valid_stages = [choice[0] for choice in Application.STAGE_CHOICES]
+        if new_stage not in valid_stages:
+            return Response({'error': 'Invalid stage'}, status=status.HTTP_400_BAD_REQUEST)
+
+        old_stage = application.recruitment_stage
+        error = transition_error(old_stage, new_stage)
+        if error:
+            return Response({'error': error}, status=status.HTTP_400_BAD_REQUEST)
+
+        raw_date = request.data.get('interview_date')
+        if raw_date:
+            interview_date = parse_interview_date(raw_date)
+            if interview_date is None:
+                return Response(
+                    {'error': 'interview_date must look like 2026-10-20T10:30:00Z'},
+                    status=status.HTTP_400_BAD_REQUEST)
+            application.interview_date = interview_date
+
+        application.recruitment_stage = new_stage
+        if new_stage == 'rejected' and request.data.get('rejection_reason'):
+            application.rejection_reason = str(request.data.get('rejection_reason'))[:255]
+        application.save()
+
+        if new_stage != old_stage and new_stage in STAGE_MESSAGES:
+            Notification.objects.create(
+                user=application.candidate.user,
+                message=STAGE_MESSAGES[new_stage].format(job=application.job.title),
             )
-            candidate.save()
 
-        cv_path = candidate.cv_file_path
-        return Response({
-            'cv_file_path': f"{settings.MEDIA_URL}{cv_path}" if cv_path else '',
-            'extracted_skills': candidate.extracted_skills,
-            'education': candidate.education,
-            'experience_years': float(candidate.experience_years),
-            'resume_score': candidate.resume_score,
-        })
+        return Response(ApplicationSerializer(application).data)
 
+
+# ---------------- Matching, ranking, skill gap, career path ----------------
 
 class JobMatchView(APIView):
     permission_classes = [IsCandidate]
@@ -290,36 +307,7 @@ class JobMatchView(APIView):
             return Response({'error': 'Job not found or not approved'}, status=status.HTTP_404_NOT_FOUND)
 
         candidate = get_object_or_404(Candidate, user=request.user)
-
-        candidate_skill_names = [
-            s.get('name') if isinstance(s, dict) else s
-            for s in candidate.extracted_skills
-        ]
-        job_skill_names = [
-            s.get('name') if isinstance(s, dict) else s
-            for s in job.required_skills
-        ]
-
-        result = get_match_and_gap(
-            candidate_skills=candidate_skill_names,
-            candidate_experience=float(candidate.experience_years),
-            candidate_education=candidate.education,
-            job_skills=job_skill_names,
-        )
-
-        matched = {m.lower().strip() for m in result['matched_skills']}
-
-        breakdown = []
-        for skill in job.required_skills:
-            name = skill.get('name') if isinstance(skill, dict) else skill
-            weight = skill.get('weight') if isinstance(skill, dict) else None
-            has_skill = bool(name) and normalize_skill(name) in matched
-            breakdown.append({
-                'skill': name,
-                'candidate_has': has_skill,
-                'weight': weight,
-                'status': 'strong' if has_skill else 'missing',
-            })
+        result, breakdown = evaluate(candidate, job)
 
         return Response({
             'job_id': job.id,
@@ -334,15 +322,11 @@ class RankedCandidatesView(APIView):
 
     def get(self, request, pk):
         try:
-            # Only the company's own job
             job = Job.objects.get(pk=pk, company__user=request.user)
         except Job.DoesNotExist:
             return Response({'error': 'Job not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        applications = {
-            a.candidate_id: a
-            for a in Application.objects.filter(job=job)
-        }
+        applications = {a.candidate_id: a for a in Application.objects.filter(job=job)}
         matches = (
             JobMatch.objects
             .filter(job=job)
@@ -367,6 +351,10 @@ class RankedCandidatesView(APIView):
 
 
 class SkillGapView(APIView):
+    """
+    GET /api/skill-gaps/?job_id=5               -> list (strong / weak / missing)
+    GET /api/skill-gaps/?job_id=5&narrative=true -> {"summary", "summary_source", "skills"}
+    """
     permission_classes = [IsCandidate]
 
     def get(self, request):
@@ -380,39 +368,38 @@ class SkillGapView(APIView):
             return Response({'error': 'Job not found or not approved'}, status=status.HTTP_404_NOT_FOUND)
 
         candidate = get_object_or_404(Candidate, user=request.user)
-
-        candidate_skill_names = [
-            s.get('name') if isinstance(s, dict) else s
-            for s in candidate.extracted_skills
-        ]
-        job_skill_names = [
-            s.get('name') if isinstance(s, dict) else s
-            for s in job.required_skills
-        ]
-
-        gap = get_skill_gap(candidate_skill_names, job_skill_names)
-        matched = set(gap['matched_skills'])
+        _, breakdown = evaluate(candidate, job)
 
         report = []
-        for name in job_skill_names:
-            if not name:
-                continue
-            skill_status = 'strong' if normalize_skill(name) in matched else 'missing'
-            # Learning links only for skills the candidate still needs
-            links = get_resource_links(name) if skill_status == 'missing' else []
+        for row in breakdown:
+            name = row['skill']
+            links = get_resource_links(name) if row['status'] in ('weak', 'missing') else []
             SkillGap.objects.update_or_create(
                 candidate=candidate,
                 job=job,
                 skill_name=name,
-                defaults={'status': skill_status, 'resource_links': links},
+                defaults={'status': row['status'], 'resource_links': links},
             )
             report.append({
                 'skill_name': name,
-                'status': skill_status,
+                'status': row['status'],
                 'resource_links': links,
             })
 
-        return Response(report)
+        if request.query_params.get('narrative', '').lower() != 'true':
+            return Response(report)
+
+        strong = [r['skill'] for r in breakdown if r['status'] == 'strong']
+        weak = [r['skill'] for r in breakdown if r['status'] == 'weak']
+        missing = [r['skill'] for r in breakdown if r['status'] == 'missing']
+        try:
+            summary = generate_gap_narrative(job.title, strong, weak, missing)
+            source = 'ai'
+        except AIServiceError:
+            summary = gap_summary(job.title, breakdown)
+            source = 'rules'
+
+        return Response({'summary': summary, 'summary_source': source, 'skills': report})
 
 
 class CareerPathView(APIView):
@@ -421,27 +408,19 @@ class CareerPathView(APIView):
     def get(self, request):
         candidate = get_object_or_404(Candidate, user=request.user)
 
-        skill_names = [
-            s.get('name') if isinstance(s, dict) else s
-            for s in candidate.extracted_skills
-        ]
+        skill_names = _names(candidate.extracted_skills)
         if not skill_names:
             return Response(
                 {'error': 'Upload your CV first so we can read your skills'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Optional: pass ?job_id=1 to include the skills missing for that job
         missing = []
         job_id = request.query_params.get('job_id')
         if job_id:
             try:
                 job = Job.objects.get(pk=job_id, status='approved')
-                job_skill_names = [
-                    s.get('name') if isinstance(s, dict) else s
-                    for s in job.required_skills
-                ]
-                missing = get_skill_gap(skill_names, job_skill_names)['missing_skills']
+                missing = get_skill_gap(skill_names, _names(job.required_skills))['missing_skills']
             except (Job.DoesNotExist, ValueError):
                 pass
 
@@ -478,7 +457,7 @@ class CareerPathView(APIView):
             roadmap.append({
                 'skill': name,
                 'priority': i,
-                'est_weeks': estimate_weeks(name),   # rough estimate
+                'est_weeks': estimate_weeks(name),
                 'resources': get_resource_links(name),
             })
 
@@ -489,37 +468,7 @@ class CareerPathView(APIView):
         })
 
 
-class UpdateApplicationStageView(APIView):
-    permission_classes = [IsCompany]
-
-    def patch(self, request, pk):
-        try:
-            application = Application.objects.get(pk=pk, job__company__user=request.user)
-        except Application.DoesNotExist:
-            return Response({'error': 'Application not found'}, status=status.HTTP_404_NOT_FOUND)
-
-        new_stage = request.data.get('recruitment_stage')
-        valid_stages = [choice[0] for choice in Application.STAGE_CHOICES]
-        if new_stage not in valid_stages:
-            return Response({'error': 'Invalid stage'}, status=status.HTTP_400_BAD_REQUEST)
-
-        old_stage = application.recruitment_stage
-        application.recruitment_stage = new_stage
-        if request.data.get('interview_date'):
-            application.interview_date = request.data.get('interview_date')
-        if request.data.get('rejection_reason'):
-            application.rejection_reason = request.data.get('rejection_reason')
-        application.save()
-
-        # Tell the candidate, but only when the stage really changed
-        if new_stage != old_stage and new_stage in STAGE_MESSAGES:
-            Notification.objects.create(
-                user=application.candidate.user,
-                message=STAGE_MESSAGES[new_stage].format(job=application.job.title),
-            )
-
-        return Response(ApplicationSerializer(application).data)
-
+# ---------------- Notifications ----------------
 
 class NotificationListView(APIView):
     permission_classes = [IsAuthenticated]

@@ -5,7 +5,11 @@ from .views import (
     JobApproveView,
     ApplyToJobView, MyApplicationsView, JobApplicationsView, UpdateApplicationStageView,
     MyProfileView, JobMatchView, RankedCandidatesView, SkillGapView, CareerPathView,
-    NotificationListView, NotificationReadView
+    NotificationListView, NotificationReadView,
+)
+from .extra_views import (
+    CandidateDashboardView, CompanyDashboardView,
+    CompareCandidatesView, ApplicantMatchView,
 )
 from .company_views import (
     CompanyProfileView, CompanyListView, CompanyApproveView,
@@ -32,12 +36,17 @@ urlpatterns = [
     path('jobs/<int:pk>/apply/', ApplyToJobView.as_view(), name='job-apply'),
     path('jobs/<int:pk>/match/', JobMatchView.as_view(), name='job-match'),
     path('jobs/<int:pk>/ranked-candidates/', RankedCandidatesView.as_view(), name='ranked-candidates'),
+    path('jobs/<int:pk>/compare/', CompareCandidatesView.as_view(), name='job-compare'),
+    path('jobs/<int:pk>/candidates/<int:candidate_id>/match/', ApplicantMatchView.as_view(), name='applicant-match'),
     path('jobs/<int:pk>/applications/', JobApplicationsView.as_view(), name='job-applications'),
 
     path('skill-gaps/', SkillGapView.as_view(), name='skill-gaps'),
 
     path('applications/mine/', MyApplicationsView.as_view(), name='my-applications'),
     path('applications/<int:pk>/', UpdateApplicationStageView.as_view(), name='update-application'),
+
+    path('dashboard/candidate/', CandidateDashboardView.as_view(), name='dashboard-candidate'),
+    path('dashboard/company/', CompanyDashboardView.as_view(), name='dashboard-company'),
 
     path('notifications/', NotificationListView.as_view(), name='notifications'),
     path('notifications/<int:pk>/read/', NotificationReadView.as_view(), name='notification-read'),

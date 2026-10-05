@@ -1,5 +1,6 @@
-from .ai_bridge import get_match_and_gap
-from .models import Candidate, Job, JobMatch
+from .ai_bridge import get_match_and_gap, build_weights, normalize_skill
+from .analysis import classify
+from .models import Application, Candidate, Job, JobMatch
 
 
 def _names(skills):
@@ -11,14 +12,23 @@ def _names(skills):
     return out
 
 
-def match_candidate_to_job(candidate, job):
-    """Score one candidate against one job and save/update the JobMatch row."""
+def evaluate(candidate, job):
+    """Returns (match result, per-skill breakdown with strong/weak/missing)."""
     result = get_match_and_gap(
         candidate_skills=_names(candidate.extracted_skills),
         candidate_experience=float(candidate.experience_years),
         candidate_education=candidate.education,
         job_skills=_names(job.required_skills),
+        skill_weights=build_weights(job.required_skills),
     )
+    matched_names = {normalize_skill(m) for m in result['matched_skills']}
+    breakdown = classify(candidate.extracted_skills, job.required_skills, matched_names)
+    return result, breakdown
+
+
+def match_candidate_to_job(candidate, job):
+    """Score one candidate against one job and save/update the JobMatch row."""
+    result, _ = evaluate(candidate, job)
     match, _ = JobMatch.objects.update_or_create(
         job=job,
         candidate=candidate,
@@ -27,6 +37,10 @@ def match_candidate_to_job(candidate, job):
             'matched_skills': result['matched_skills'],
             'missing_skills': result['missing_skills'],
         },
+    )
+    # Keep scores of existing applications fresh (e.g. after a CV re-upload)
+    Application.objects.filter(candidate=candidate, job=job).update(
+        match_score=result['overall_score']
     )
     return match
 
@@ -39,7 +53,7 @@ def run_bulk_match(job):
             match_candidate_to_job(candidate, job)
             count += 1
         except Exception:
-            continue  # one bad profile must not stop the whole run
+            continue
     return count
 
 
