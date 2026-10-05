@@ -1,4 +1,8 @@
 from fastapi import FastAPI, UploadFile, File, Form
+from ai_engine import analyze_candidate
+
+import os
+import tempfile
 
 
 app = FastAPI(
@@ -27,8 +31,25 @@ async def analyze(
     resume: UploadFile = File(...),
     job_description: str = Form(...)
 ):
-    return {
-        "message": "Analysis endpoint created",
-        "resume_filename": resume.filename,
-        "job_description_received": bool(job_description.strip())
-    }
+    suffix = os.path.splitext(resume.filename)[1]
+
+    with tempfile.NamedTemporaryFile(
+        delete=False,
+        suffix=suffix
+    ) as temp_file:
+
+        resume_data = await resume.read()
+        temp_file.write(resume_data)
+        temp_resume_path = temp_file.name
+
+    try:
+        result = analyze_candidate(
+            temp_resume_path,
+            job_description
+        )
+
+        return result
+
+    finally:
+        if os.path.exists(temp_resume_path):
+            os.remove(temp_resume_path)

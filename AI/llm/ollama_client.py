@@ -1,7 +1,7 @@
 from ollama import chat
 
 
-DEFAULT_MODEL = "llama3:latest"
+DEFAULT_MODEL = "llama3.2:latest"
 
 
 def call_ollama(prompt: str, model: str = DEFAULT_MODEL) -> str:
