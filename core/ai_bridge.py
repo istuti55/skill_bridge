@@ -6,6 +6,7 @@ if AI_FOLDER not in sys.path:
     sys.path.insert(0, AI_FOLDER)
 
 from matching.matcher import complete_match
+from intelligence.skill_gap import analyze_skill_gap
 
 
 def get_match_and_gap(candidate_skills, candidate_experience, candidate_education,
@@ -30,3 +31,7 @@ def get_match_and_gap(candidate_skills, candidate_experience, candidate_educatio
             "recommendation": result["recommendation"],
         },
     }
+
+
+def get_skill_gap(candidate_skills, job_skills):
+    return analyze_skill_gap(candidate_skills, job_skills)

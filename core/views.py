@@ -8,10 +8,10 @@ from django.conf import settings
 import os
 import pymupdf as fitz  # PyMuPDF
 
-from .models import User, Candidate, Company, Job, Application
+from .models import User, Candidate, Company, Job, Application, SkillGap
 from .serializers import UserRegisterSerializer, UserSerializer, JobSerializer, ApplicationSerializer
 from .ai_service import extract_cv_data
-from .ai_bridge import get_match_and_gap
+from .ai_bridge import get_match_and_gap, get_skill_gap
 from .permissions import IsCandidate, IsCompany, IsAdmin
 
 
@@ -214,3 +214,137 @@ class UpdateApplicationStageView(APIView):
         application.save()
 
         return Response(ApplicationSerializer(application).data)
+
+class MyProfileView(APIView):
+    permission_classes = [IsCandidate]
+
+    def get(self, request):
+        candidate = Candidate.objects.get(user=request.user)
+        return Response({
+            'cv_file_path': candidate.cv_file_path,
+            'extracted_skills': candidate.extracted_skills,
+            'education': candidate.education,
+            'experience_years': float(candidate.experience_years),
+            'resume_score': candidate.resume_score,
+        })
+
+
+class JobMatchView(APIView):
+    permission_classes = [IsCandidate]
+
+    def get(self, request, pk):
+        try:
+            job = Job.objects.get(pk=pk, status='approved')
+        except Job.DoesNotExist:
+            return Response({'error': 'Job not found or not approved'}, status=status.HTTP_404_NOT_FOUND)
+
+        candidate = Candidate.objects.get(user=request.user)
+
+        candidate_skill_names = [
+            s.get('name') if isinstance(s, dict) else s
+            for s in candidate.extracted_skills
+        ]
+        job_skill_names = [
+            s.get('name') if isinstance(s, dict) else s
+            for s in job.required_skills
+        ]
+
+        result = get_match_and_gap(
+            candidate_skills=candidate_skill_names,
+            candidate_experience=float(candidate.experience_years),
+            candidate_education=candidate.education,
+            job_skills=job_skill_names,
+        )
+
+        matched = {m.lower().strip() for m in result['matched_skills']}
+
+        breakdown = []
+        for skill in job.required_skills:
+            name = skill.get('name') if isinstance(skill, dict) else skill
+            weight = skill.get('weight') if isinstance(skill, dict) else None
+            has_skill = bool(name) and name.lower().strip() in matched
+            breakdown.append({
+                'skill': name,
+                'candidate_has': has_skill,
+                'weight': weight,
+                'status': 'strong' if has_skill else 'missing',
+            })
+
+        return Response({
+            'job_id': job.id,
+            'match_score': result['overall_score'],
+            'breakdown': breakdown,
+            'scores': result['breakdown'],
+        })
+
+class RankedCandidatesView(APIView):
+    permission_classes = [IsCompany]
+
+    def get(self, request, pk):
+        try:
+            # Only the company's own job
+            job = Job.objects.get(pk=pk, company__user=request.user)
+        except Job.DoesNotExist:
+            return Response({'error': 'Job not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        applications = (
+            Application.objects
+            .filter(job=job)
+            .select_related('candidate__user')
+            .order_by('-match_score')
+        )
+
+        return Response([
+            {
+                'candidate_id': app.candidate.id,
+                'name': app.candidate.user.name,
+                'match_score': float(app.match_score),
+                'recruitment_stage': app.recruitment_stage,
+            }
+            for app in applications
+        ])
+class SkillGapView(APIView):
+    permission_classes = [IsCandidate]
+
+    def get(self, request):
+        job_id = request.query_params.get('job_id')
+        if not job_id:
+            return Response({'error': 'job_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            job = Job.objects.get(pk=job_id, status='approved')
+        except (Job.DoesNotExist, ValueError):
+            return Response({'error': 'Job not found or not approved'}, status=status.HTTP_404_NOT_FOUND)
+
+        candidate = Candidate.objects.get(user=request.user)
+
+        candidate_skill_names = [
+            s.get('name') if isinstance(s, dict) else s
+            for s in candidate.extracted_skills
+        ]
+        job_skill_names = [
+            s.get('name') if isinstance(s, dict) else s
+            for s in job.required_skills
+        ]
+
+        gap = get_skill_gap(candidate_skill_names, job_skill_names)
+        matched = set(gap['matched_skills'])
+
+        report = []
+        for name in job_skill_names:
+            if not name:
+                continue
+            skill_status = 'strong' if name.lower().strip() in matched else 'missing'
+            record, _ = SkillGap.objects.update_or_create(
+                candidate=candidate,
+                job=job,
+                skill_name=name,
+                defaults={'status': skill_status},
+            )
+            report.append({
+                'skill_name': name,
+                'status': skill_status,
+                'resource_links': record.resource_links,
+            })
+
+        return Response(report)
