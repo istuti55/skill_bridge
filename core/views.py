@@ -11,7 +11,7 @@ import pymupdf as fitz  # PyMuPDF
 from .models import User, Candidate, Company, Job, Application, SkillGap, Notification
 from .serializers import UserRegisterSerializer, UserSerializer, JobSerializer, ApplicationSerializer
 from .ai_service import extract_cv_data
-from .ai_bridge import get_match_and_gap, get_skill_gap, get_career_recommendation
+from .ai_bridge import get_match_and_gap, get_skill_gap, get_career_recommendation, normalize_skill
 from .permissions import IsCandidate, IsCompany, IsAdmin
 
 
@@ -247,7 +247,7 @@ class JobMatchView(APIView):
         for skill in job.required_skills:
             name = skill.get('name') if isinstance(skill, dict) else skill
             weight = skill.get('weight') if isinstance(skill, dict) else None
-            has_skill = bool(name) and name.lower().strip() in matched
+            has_skill = bool(name) and normalize_skill(name) in matched
             breakdown.append({
                 'skill': name,
                 'candidate_has': has_skill,
@@ -322,7 +322,7 @@ class SkillGapView(APIView):
         for name in job_skill_names:
             if not name:
                 continue
-            skill_status = 'strong' if name.lower().strip() in matched else 'missing'
+            skill_status = 'strong' if normalize_skill(name) in matched else 'missing'
             record, _ = SkillGap.objects.update_or_create(
                 candidate=candidate,
                 job=job,
