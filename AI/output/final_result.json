@@ -6,6 +6,7 @@
             "phone": "(555) 019-2834",
             "location": "New York, NY"
         },
+        "summary": "Results-driven Software Engineer with over 4 years of experience building scalable web applications and optimizing backend architectures. Proficient in Python, JavaScript, and cloud technologies, with a proven track record of improving system performance and leading tech initiatives.",
         "skills": [
             "Python",
             "JavaScript (ES6+)",
@@ -25,31 +26,34 @@
         "education": [
             {
                 "title": "Bachelor of Science in Computer Science",
-                "university": "State University",
-                "degree": "Bachelor of Science",
-                "gpa": "3.8 / 4.0",
-                "date": "May 2021"
+                "institution": "State University",
+                "gpa": "3.8 / 4.0"
             }
         ],
         "experience": [
             {
-                "title": "Software Engineer — TechCorp Solutions",
+                "title": "Software Engineer",
                 "company": "TechCorp Solutions",
-                "start_date": "June 2023",
-                "end_date": "Present",
                 "current": true,
-                "details": "Led the backend migration to microservices architecture, reducing server response latency by 25%. Developed and maintained high-traffic RESTful APIs serving over 500,000 active monthly users. Mentored junior developers and spearheaded code review practices, improving overall codebase quality score by 15%."
+                "details": "Led the backend migration to microservices architecture, reducing server response latency by 25%. Developed and maintained high-traffic RESTful APIs serving over 500,000 active monthly users. Mentored junior developers and spearheaded code review practices, improving overall codebase quality score by 15%.",
+                "start_date": "June 2023",
+                "end_date": "Present"
             },
             {
-                "title": "Junior Web Developer — Apex Digital Agency",
+                "title": "Junior Web Developer",
                 "company": "Apex Digital Agency",
-                "start_date": "August 2021",
-                "end_date": "May 2023",
                 "current": false,
-                "details": "Built responsive user interfaces using React and Tailwind CSS for 12+ client websites. Integrated third-party payment gateways (Stripe, PayPal), boosting checkout conversion rates by 10%. Collaborated with UX designers to ensure WCAG accessibility compliance across all web products."
+                "details": "Built responsive user interfaces using React and Tailwind CSS for 12+ client websites. Integrated third-party payment gateways (Stripe, PayPal), boosting checkout conversion rates by 10%. Collaborated with UX designers to ensure WCAG accessibility compliance across all web products.",
+                "start_date": "August 2021",
+                "end_date": "May 2023"
             }
         ],
-        "projects": [],
+        "projects": [
+            {
+                "title": "TaskFlow (Task Management App)",
+                "description": "Built a real-time productivity app using React, Node.js, and WebSockets. Hosted on AWS with automated CI/CD deployment via GitHub Actions."
+            }
+        ],
         "certifications": []
     },
     "job": {
@@ -77,16 +81,24 @@
     "credibility": {
         "status": "Manual verification recommended.",
         "timeline_issues": [],
+        "strong_evidence": [
+            "JavaScript (ES6+)",
+            "TypeScript",
+            "HTML5/CSS3",
+            "React",
+            "Node.js",
+            "Git",
+            "AWS (S3, EC2, Lambda)",
+            "CI/CD pipelines",
+            "RESTful APIs"
+        ],
+        "weak_evidence": [],
         "unsupported_skills": [
             "Python",
-            "JavaScript (ES6+)",
             "SQL",
-            "Node.js",
             "Django",
             "PostgreSQL",
-            "Docker",
-            "AWS (S3, EC2, Lambda)",
-            "CI/CD pipelines"
+            "Docker"
         ],
         "duplicate_skills": [],
         "verification_required": true
@@ -109,30 +121,55 @@
         "recommendation": "Strong Match"
     },
     "skill_gap": {
-        "matched_skills": [
-            "aws",
-            "docker",
-            "git",
-            "python",
-            "sql"
-        ],
-        "missing_skills": [
-            "fastapi"
-        ],
-        "skill_gap_percentage": 16.67
+        "required": {
+            "matched_skills": [
+                "docker",
+                "git",
+                "python",
+                "sql"
+            ],
+            "missing_skills": [
+                "fastapi"
+            ],
+            "skill_gap_percentage": 20.0
+        },
+        "preferred": {
+            "matched_skills": [
+                "aws"
+            ],
+            "missing_skills": [],
+            "skill_gap_percentage": 0.0
+        },
+        "learning_priorities": [
+            {
+                "skill": "fastapi",
+                "priority": "high",
+                "reason": "Required skill missing from candidate profile."
+            }
+        ]
     },
     "career_recommendation": {
         "recommended_roles": [
-            "Cloud Architect",
+            "Backend Developer",
+            "Frontend Developer",
             "Full Stack Developer"
         ],
         "skill_priorities": [
-            "fastapi",
-            "CI/CD pipelines"
+            "fastapi"
         ],
         "learning_path": [
-            "AWS (S3, EC2, Lambda), CI/CD pipelines, fastapi"
+            {
+                "skill": "fastapi",
+                "priority": "high",
+                "topics": [
+                    "Introduction to FastAPI",
+                    "FastAPI Fundamentals",
+                    "Building RESTful APIs with FastAPI",
+                    "FastAPI Routing and Middleware",
+                    "Deploying FastAPI Applications"
+                ]
+            }
         ],
-        "reason": "Based on the candidate's experience and skills, we recommend exploring roles that leverage their cloud and backend expertise. Focusing on learning fastapi will further enhance their backend development skills and increase their competitiveness in the job market."
+        "reason": "Candidate is best aligned with Backend Developer, Frontend Developer, Full Stack Developer based on their current skills and experience. Current skills include aws, ci/cd pipelines, django, docker, git, html5/css3, javascript, node.js, postgresql, python, react, rest api, sql, typescript. The main required skill gap is fastapi."
     }
 }

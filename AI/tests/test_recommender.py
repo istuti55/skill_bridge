@@ -7,7 +7,8 @@ candidate_skills = [
     "Python",
     "Django",
     "SQL",
-    "Docker"
+    "Docker",
+    "AWS"
 ]
 
 experience = [
@@ -19,8 +20,15 @@ education = [
 ]
 
 missing_skills = [
-    "FastAPI",
-    "AWS"
+    "FastAPI"
+]
+
+learning_priorities = [
+    {
+        "skill": "FastAPI",
+        "priority": "high",
+        "reason": "Required skill missing from candidate profile."
+    }
 ]
 
 
@@ -28,8 +36,10 @@ result = generate_career_recommendation(
     candidate_skills,
     experience,
     education,
-    missing_skills
+    missing_skills,
+    learning_priorities=learning_priorities
 )
+
 
 print("\n===== CAREER RECOMMENDATION =====\n")
 

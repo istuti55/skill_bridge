@@ -8,8 +8,15 @@ from parsing.job_parser import parse_job
 
 from matching.matcher import complete_match
 
-from intelligence.skill_gap import analyze_skill_gap
-from intelligence.recommender import generate_career_recommendation
+from intelligence.skill_gap import (
+    analyze_required_skill_gap,
+    analyze_preferred_skill_gap,
+    prioritize_missing_skills
+)
+
+from intelligence.recommender import (
+    generate_career_recommendation
+)
 
 from verification.credibility import check_credibility
 
@@ -51,7 +58,10 @@ def calculate_experience_years(experience):
             False
         )
 
+        # ------------------------------------------------------
         # Skip if no start date exists
+        # ------------------------------------------------------
+
         if not start_date:
             continue
 
@@ -198,7 +208,9 @@ def analyze_candidate(pdf_path, job_description):
 
     print("1. Parsing resume...")
 
-    resume_result = parse_resume(pdf_path)
+    resume_result = parse_resume(
+        pdf_path
+    )
 
     # parse_resume may return JSON string or dictionary
     if isinstance(resume_result, str):
@@ -269,12 +281,6 @@ def analyze_candidate(pdf_path, job_description):
         []
     )
 
-    # Combine required and preferred skills
-    job_skills = (
-        required_skills
-        + preferred_skills
-    )
-
     required_experience = job_data.get(
         "minimum_experience",
         0
@@ -327,14 +333,15 @@ def analyze_candidate(pdf_path, job_description):
     # ==========================================================
 
     match_result = complete_match(
-    candidate_skills,
-    required_skills,
-    preferred_skills,
-    candidate_experience_years,
-    required_experience,
-    candidate_education,
-    required_education
-)
+        candidate_skills,
+        required_skills,
+        preferred_skills,
+        candidate_experience_years,
+        required_experience,
+        candidate_education,
+        required_education
+    )
+
     print("✓ Match calculated")
 
 
@@ -344,9 +351,41 @@ def analyze_candidate(pdf_path, job_description):
 
     print("5. Analyzing skill gap...")
 
-    skill_gap = analyze_skill_gap(
-        candidate_skills,
-        job_skills
+    # ----------------------------------------------------------
+    # Required skill gap
+    # ----------------------------------------------------------
+
+    required_skill_gap = (
+        analyze_required_skill_gap(
+            candidate_skills,
+            required_skills
+        )
+    )
+
+    # ----------------------------------------------------------
+    # Preferred skill gap
+    # ----------------------------------------------------------
+
+    preferred_skill_gap = (
+        analyze_preferred_skill_gap(
+            candidate_skills,
+            preferred_skills
+        )
+    )
+
+    # ----------------------------------------------------------
+    # Learning priorities
+    # ----------------------------------------------------------
+
+    learning_priorities = (
+        prioritize_missing_skills(
+            required_skill_gap[
+                "missing_skills"
+            ],
+            preferred_skill_gap[
+                "missing_skills"
+            ]
+        )
     )
 
     print("✓ Skill gap calculated")
@@ -356,13 +395,29 @@ def analyze_candidate(pdf_path, job_description):
     # 9. CAREER RECOMMENDATION
     # ==========================================================
 
-    print("6. Generating career recommendation...")
+    print(
+        "6. Generating career recommendation..."
+    )
 
-    recommendation = generate_career_recommendation(
-        candidate_skills,
-        candidate_experience,
-        candidate_education,
-        skill_gap["missing_skills"]
+    # ----------------------------------------------------------
+    # Pass deterministic learning priorities
+    # to the career recommender.
+    # ----------------------------------------------------------
+
+    recommendation = (
+        generate_career_recommendation(
+            candidate_skills,
+            candidate_experience,
+            candidate_education,
+            required_skill_gap[
+                "missing_skills"
+            ],
+            projects=resume_data.get(
+                "projects",
+                []
+            ),
+            learning_priorities=learning_priorities
+        )
     )
 
     print("✓ Recommendation generated")
@@ -373,6 +428,7 @@ def analyze_candidate(pdf_path, job_description):
     # ==========================================================
 
     final_result = {
+
         "candidate": resume_data,
 
         "job": job_data,
@@ -381,7 +437,14 @@ def analyze_candidate(pdf_path, job_description):
 
         "matching": match_result,
 
-        "skill_gap": skill_gap,
+        "skill_gap": {
+
+            "required": required_skill_gap,
+
+            "preferred": preferred_skill_gap,
+
+            "learning_priorities": learning_priorities
+        },
 
         "career_recommendation": recommendation
     }
@@ -418,7 +481,6 @@ def analyze_candidate(pdf_path, job_description):
             ensure_ascii=False
         )
 
-
     print(
         "\n✓ Final result saved to:"
     )
@@ -426,7 +488,6 @@ def analyze_candidate(pdf_path, job_description):
     print(
         output_file.resolve()
     )
-
 
     return final_result
 

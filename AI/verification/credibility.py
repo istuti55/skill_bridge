@@ -6,6 +6,9 @@ from matching.skill_normalizer import normalize_skill
 def check_timeline(experience):
     """
     Detect potentially overlapping employment periods.
+
+    The function looks for years inside each experience entry
+    and compares the inferred employment ranges.
     """
 
     issues = []
@@ -20,7 +23,6 @@ def check_timeline(experience):
             current_text = str(current).lower()
             other_text = str(other).lower()
 
-            # Basic year detection
             current_years = [
                 int(year)
                 for year in re.findall(
@@ -65,17 +67,22 @@ def check_skill_consistency(skills, experience, projects):
 
     Evidence levels:
 
-        Strong evidence:
-            Skill appears directly in experience or projects.
+    Strong evidence:
+        The skill or a direct technical variation appears
+        in experience or project evidence.
 
-        Weak evidence:
-            A related keyword or variation appears.
+    Weak evidence:
+        A related concept appears in experience or projects,
+        but the exact skill is not directly demonstrated.
 
-        No evidence:
-            No relevant evidence is found.
+    Unsupported:
+        The skill is claimed but no supporting evidence
+        is found in experience or projects.
 
-    The function currently returns only unsupported skills
-    so the rest of the credibility pipeline remains compatible.
+    Important:
+        The candidate's skills list itself is NOT considered
+        evidence. This prevents a candidate from verifying
+        a skill simply by listing it.
     """
 
     evidence_text = (
@@ -84,99 +91,171 @@ def check_skill_consistency(skills, experience, projects):
         + " ".join(map(str, projects))
     ).lower()
 
-    unsupported = []
+    strong_evidence = []
+    weak_evidence = []
+    unsupported_skills = []
 
-    # ----------------------------------------------------------
-    # COMMON SKILL EVIDENCE ALIASES
-    # ----------------------------------------------------------
+    # ==========================================================
+    # SKILL EVIDENCE ALIASES
+    # ==========================================================
 
     evidence_aliases = {
 
-        "python": [
-            "python"
-        ],
+        "python": {
+            "strong": [
+                "python"
+            ],
+            "weak": [
+                "python scripting",
+                "python development"
+            ]
+        },
 
-        "javascript": [
-            "javascript",
-            "js"
-        ],
+        "javascript": {
+            "strong": [
+                "javascript",
+                "js"
+            ],
+            "weak": [
+                "frontend development",
+                "web development"
+            ]
+        },
 
-        "typescript": [
-            "typescript",
-            "ts"
-        ],
+        "typescript": {
+            "strong": [
+                "typescript",
+                "ts"
+            ],
+            "weak": []
+        },
 
-        "sql": [
-            "sql",
-            "database",
-            "databases"
-        ],
+        "sql": {
+            "strong": [
+                "sql"
+            ],
+            "weak": [
+                "database",
+                "databases"
+            ]
+        },
 
-        "html5/css3": [
-            "html",
-            "html5",
-            "css",
-            "css3"
-        ],
+        "html5/css3": {
+            "strong": [
+                "html",
+                "html5",
+                "css",
+                "css3"
+            ],
+            "weak": [
+                "frontend",
+                "web development"
+            ]
+        },
 
-        "react": [
-            "react",
-            "reactjs",
-            "react.js"
-        ],
+        "react": {
+            "strong": [
+                "react",
+                "reactjs",
+                "react.js"
+            ],
+            "weak": []
+        },
 
-        "node.js": [
-            "node.js",
-            "nodejs",
-            "node"
-        ],
+        "node.js": {
+            "strong": [
+                "node.js",
+                "nodejs",
+                "node"
+            ],
+            "weak": []
+        },
 
-        "django": [
-            "django"
-        ],
+        "django": {
+            "strong": [
+                "django"
+            ],
+            "weak": [
+                "python web framework"
+            ]
+        },
 
-        "postgresql": [
-            "postgresql",
-            "postgres",
-            "postgres db"
-        ],
+        "postgresql": {
+            "strong": [
+                "postgresql",
+                "postgres",
+                "postgres db"
+            ],
+            "weak": [
+                "database",
+                "databases"
+            ]
+        },
 
-        "docker": [
-            "docker",
-            "container",
-            "containers"
-        ],
+        "docker": {
+            "strong": [
+                "docker"
+            ],
+            "weak": [
+                "container",
+                "containers",
+                "containerized"
+            ]
+        },
 
-        "git": [
-            "git",
-            "github",
-            "version control"
-        ],
+        "git": {
+            "strong": [
+                "git",
+                "github"
+            ],
+            "weak": [
+                "version control"
+            ]
+        },
 
-        "aws": [
-            "aws",
-            "amazon web services"
-        ],
+        "aws": {
+            "strong": [
+                "aws",
+                "amazon web services"
+            ],
+            "weak": [
+                "cloud",
+                "cloud hosting",
+                "cloud deployment"
+            ]
+        },
 
-        "ci/cd pipelines": [
-            "ci/cd",
-            "ci cd",
-            "continuous integration",
-            "continuous deployment",
-            "github actions"
-        ],
+        "ci/cd pipelines": {
+            "strong": [
+                "ci/cd",
+                "ci cd",
+                "continuous integration",
+                "continuous deployment",
+                "github actions"
+            ],
+            "weak": [
+                "automated deployment",
+                "deployment pipeline"
+            ]
+        },
 
-        "rest api": [
-            "rest api",
-            "rest apis",
-            "restful api",
-            "restful apis"
-        ]
+        "rest api": {
+            "strong": [
+                "rest api",
+                "rest apis",
+                "restful api",
+                "restful apis"
+            ],
+            "weak": [
+                "api",
+                "apis"
+            ]
+        }
     }
 
-    # ----------------------------------------------------------
+    # ==========================================================
     # CHECK EACH SKILL
-    # ----------------------------------------------------------
+    # ==========================================================
 
     for skill in skills:
 
@@ -185,54 +264,63 @@ def check_skill_consistency(skills, experience, projects):
         if not normalized_skill:
             continue
 
-        keywords = evidence_aliases.get(
+        evidence = evidence_aliases.get(
             normalized_skill,
-            [normalized_skill]
+            {
+                "strong": [normalized_skill],
+                "weak": []
+            }
         )
 
-        # ------------------------------------------------------
+        strong_keywords = evidence["strong"]
+        weak_keywords = evidence["weak"]
+
+        # ======================================================
         # STRONG EVIDENCE
-        # ------------------------------------------------------
-        #
-        # First keyword represents the direct skill name.
-        #
+        # ======================================================
 
         if any(
             keyword.lower() in evidence_text
-            for keyword in keywords[:1]
+            for keyword in strong_keywords
         ):
+            strong_evidence.append(skill)
             continue
 
-        # ------------------------------------------------------
-        # WEAK / RELATED EVIDENCE
-        # ------------------------------------------------------
-        #
-        # Remaining keywords represent related variations.
-        #
+        # ======================================================
+        # WEAK EVIDENCE
+        # ======================================================
 
         if any(
             keyword.lower() in evidence_text
-            for keyword in keywords[1:]
+            for keyword in weak_keywords
         ):
+            weak_evidence.append(skill)
             continue
 
-        # ------------------------------------------------------
+        # ======================================================
         # NO EVIDENCE
-        # ------------------------------------------------------
+        # ======================================================
 
-        unsupported.append(skill)
+        unsupported_skills.append(skill)
 
-    return unsupported
+    return {
+        "strong_evidence": strong_evidence,
+        "weak_evidence": weak_evidence,
+        "unsupported_skills": unsupported_skills
+    }
 
 
 def check_keyword_stuffing(skills):
     """
-    Detect duplicate skills or unusually repetitive skill entries.
+    Detect duplicate skill entries.
+
+    Matching is case-insensitive.
     """
 
     normalized = [
         skill.lower().strip()
         for skill in skills
+        if skill
     ]
 
     duplicates = []
@@ -242,12 +330,20 @@ def check_keyword_stuffing(skills):
         if normalized.count(skill) > 1:
             duplicates.append(skill)
 
-    return duplicates
+    return sorted(duplicates)
 
 
 def check_credibility(candidate):
     """
-    Generate a credibility report.
+    Generate a complete credibility report.
+
+    Checks:
+
+    1. Employment timeline
+    2. Skill evidence
+    3. Duplicate skills
+
+    Returns a structured credibility report.
     """
 
     experience = candidate.get(
@@ -277,11 +373,23 @@ def check_credibility(candidate):
     # 2. SKILL CONSISTENCY CHECK
     # ==========================================================
 
-    unsupported_skills = check_skill_consistency(
+    skill_evidence = check_skill_consistency(
         skills,
         experience,
         projects
     )
+
+    strong_evidence = skill_evidence[
+        "strong_evidence"
+    ]
+
+    weak_evidence = skill_evidence[
+        "weak_evidence"
+    ]
+
+    unsupported_skills = skill_evidence[
+        "unsupported_skills"
+    ]
 
     # ==========================================================
     # 3. DUPLICATE SKILL CHECK
@@ -298,16 +406,19 @@ def check_credibility(candidate):
     issues = []
 
     if timeline_issues:
+
         issues.extend(
             timeline_issues
         )
 
     if unsupported_skills:
+
         issues.append(
             "Some listed skills have limited supporting evidence."
         )
 
     if duplicate_skills:
+
         issues.append(
             "Duplicate skill entries detected."
         )
@@ -335,6 +446,8 @@ def check_credibility(candidate):
     return {
         "status": status,
         "timeline_issues": timeline_issues,
+        "strong_evidence": strong_evidence,
+        "weak_evidence": weak_evidence,
         "unsupported_skills": unsupported_skills,
         "duplicate_skills": duplicate_skills,
         "verification_required": bool(issues)
