@@ -10,10 +10,51 @@ import os
 import tempfile
 
 
+# --------------------------------------------------
+# FastAPI Application
+# --------------------------------------------------
+
 app = FastAPI(
     title="SkillBridge AI API",
-    description="Backend API for SkillBridge AI services",
-    version="1.0.0"
+    description="""
+SkillBridge AI API provides AI-powered resume analysis
+and job matching services.
+
+### Main Features
+
+- Resume parsing
+- Job description analysis
+- Skill matching
+- Credibility analysis
+- Skill gap analysis
+- Career recommendations
+
+### Resume Requirements
+
+- Supported formats: PDF and DOCX
+- Maximum resume size: 5 MB
+- Maximum job description length: 10,000 characters
+
+### Analysis Response
+
+Successful analysis returns:
+
+- candidate
+- job
+- credibility
+- matching
+- skill_gap
+- career_recommendation
+
+### Error Handling
+
+Validation and analysis errors use a standardized
+error structure containing an error code and message.
+""",
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json"
 )
 
 
@@ -135,7 +176,10 @@ def normalize_analysis_result(result):
     if not isinstance(career_recommendation, dict):
         career_recommendation = {}
 
-    # Matching defaults
+    # --------------------------------------------------
+    # Matching Defaults
+    # --------------------------------------------------
+
     matching.setdefault("overall_score", 0.0)
     matching.setdefault("skills_score", 0.0)
     matching.setdefault("experience_score", 0.0)
@@ -150,7 +194,10 @@ def normalize_analysis_result(result):
     if not isinstance(matching["missing_skills"], list):
         matching["missing_skills"] = []
 
-    # Required skill gap
+    # --------------------------------------------------
+    # Required Skill Gap
+    # --------------------------------------------------
+
     required = skill_gap.get("required")
 
     if not isinstance(required, dict):
@@ -160,7 +207,10 @@ def normalize_analysis_result(result):
     required.setdefault("missing_skills", [])
     required.setdefault("skill_gap_percentage", 0.0)
 
-    # Preferred skill gap
+    # --------------------------------------------------
+    # Preferred Skill Gap
+    # --------------------------------------------------
+
     preferred = skill_gap.get("preferred")
 
     if not isinstance(preferred, dict):
@@ -178,7 +228,10 @@ def normalize_analysis_result(result):
     if not isinstance(skill_gap["learning_priorities"], list):
         skill_gap["learning_priorities"] = []
 
-    # Career recommendation defaults
+    # --------------------------------------------------
+    # Career Recommendation Defaults
+    # --------------------------------------------------
+
     career_recommendation.setdefault("recommended_roles", [])
     career_recommendation.setdefault("skill_priorities", [])
     career_recommendation.setdefault("learning_path", [])
@@ -202,6 +255,10 @@ def normalize_analysis_result(result):
     ):
         career_recommendation["learning_path"] = []
 
+    # --------------------------------------------------
+    # Standardized Response
+    # --------------------------------------------------
+
     return {
         "candidate": candidate,
         "job": job,
@@ -211,6 +268,10 @@ def normalize_analysis_result(result):
         "career_recommendation": career_recommendation
     }
 
+
+# --------------------------------------------------
+# Standardized Error Response
+# --------------------------------------------------
 
 def error_response(code, message):
     """
@@ -230,7 +291,11 @@ def error_response(code, message):
 # Root Endpoint
 # --------------------------------------------------
 
-@app.get("/")
+@app.get(
+    "/",
+    summary="API status",
+    description="Returns the current status of the SkillBridge AI API."
+)
 def root():
     return {
         "message": "SkillBridge AI API is running"
@@ -241,7 +306,11 @@ def root():
 # Health Check
 # --------------------------------------------------
 
-@app.get("/health")
+@app.get(
+    "/health",
+    summary="Health check",
+    description="Checks whether the SkillBridge AI API is healthy."
+)
 def health_check():
     return {
         "status": "healthy"
@@ -252,12 +321,61 @@ def health_check():
 # Resume Analysis
 # --------------------------------------------------
 
-@app.post("/analyze")
+@app.post(
+    "/analyze",
+    summary="Analyze a candidate",
+    description="""
+Analyze a candidate resume against a provided job description.
+
+The endpoint:
+
+1. Validates the uploaded resume.
+2. Validates the job description.
+3. Extracts candidate information.
+4. Analyzes job requirements.
+5. Performs skill matching.
+6. Performs credibility analysis.
+7. Calculates skill gaps.
+8. Generates career recommendations.
+
+### Supported Resume Formats
+
+- PDF
+- DOCX
+
+### Limits
+
+- Maximum resume size: 5 MB
+- Maximum job description length: 10,000 characters
+
+### Rate Limit
+
+Maximum 10 requests per minute per client.
+
+### Response
+
+The response follows the standardized SkillBridge AI structure.
+""",
+    response_description="Standardized candidate analysis result"
+)
 @limiter.limit("10/minute")
 async def analyze(
     request: Request,
-    resume: UploadFile = File(...),
-    job_description: str = Form(...)
+    resume: UploadFile = File(
+        ...,
+        description=(
+            "Candidate resume. "
+            "Supported formats: PDF and DOCX. "
+            "Maximum size: 5 MB."
+        )
+    ),
+    job_description: str = Form(
+        ...,
+        description=(
+            "Job description. "
+            "Maximum length: 10,000 characters."
+        )
+    )
 ):
 
     # --------------------------------------------------
@@ -399,7 +517,7 @@ async def analyze(
         # Log actual error on the server
         print(f"Analysis error: {e}")
 
-        # Return standardized error to client
+        # Return clean standardized error to client
         raise HTTPException(
             status_code=500,
             detail=error_response(
