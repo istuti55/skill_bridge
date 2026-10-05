@@ -4,7 +4,7 @@ import Home from "../pages/Home/Home";
 import Login from "../pages/Login/Login";
 import Register from "../pages/Register/Register";
 import ForgotPassword from "../pages/ForgotPassword/ForgotPassword";
-import StudentDashboard from "../pages/StudentDashboard/StudentDashboard";
+import CareerDashboard from "../pages/CareerDashboard/CareerDashboard";
 import CompanyDashboard from "../pages/CompanyDashboard/CompanyDashboard";
 
 function AppRoutes() {
@@ -14,8 +14,9 @@ function AppRoutes() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/student" element={<StudentDashboard />} />
+      <Route path="/career" element={<CareerDashboard />} />
       <Route path="/company" element={<CompanyDashboard />} />
+      <Route path="/dashboard" element={<CareerDashboard />} />
     </Routes>
   );
 }
