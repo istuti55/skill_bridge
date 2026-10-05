@@ -8,10 +8,10 @@ from django.conf import settings
 import os
 import pymupdf as fitz  # PyMuPDF
 
-from .models import User, Candidate, Company, Job, Application
+from .models import User, Candidate, Company, Job, Application, SkillGap
 from .serializers import UserRegisterSerializer, UserSerializer, JobSerializer, ApplicationSerializer
 from .ai_service import extract_cv_data
-from .ai_bridge import get_match_and_gap
+from .ai_bridge import get_match_and_gap, get_skill_gap
 from .permissions import IsCandidate, IsCompany, IsAdmin
 
 
@@ -303,3 +303,48 @@ class RankedCandidatesView(APIView):
             }
             for app in applications
         ])
+class SkillGapView(APIView):
+    permission_classes = [IsCandidate]
+
+    def get(self, request):
+        job_id = request.query_params.get('job_id')
+        if not job_id:
+            return Response({'error': 'job_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            job = Job.objects.get(pk=job_id, status='approved')
+        except (Job.DoesNotExist, ValueError):
+            return Response({'error': 'Job not found or not approved'}, status=status.HTTP_404_NOT_FOUND)
+
+        candidate = Candidate.objects.get(user=request.user)
+
+        candidate_skill_names = [
+            s.get('name') if isinstance(s, dict) else s
+            for s in candidate.extracted_skills
+        ]
+        job_skill_names = [
+            s.get('name') if isinstance(s, dict) else s
+            for s in job.required_skills
+        ]
+
+        gap = get_skill_gap(candidate_skill_names, job_skill_names)
+        matched = set(gap['matched_skills'])
+
+        report = []
+        for name in job_skill_names:
+            if not name:
+                continue
+            skill_status = 'strong' if name.lower().strip() in matched else 'missing'
+            record, _ = SkillGap.objects.update_or_create(
+                candidate=candidate,
+                job=job,
+                skill_name=name,
+                defaults={'status': skill_status},
+            )
+            report.append({
+                'skill_name': name,
+                'status': skill_status,
+                'resource_links': record.resource_links,
+            })
+
+        return Response(report)
