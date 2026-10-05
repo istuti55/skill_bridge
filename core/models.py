@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 
 
 class UserManager(BaseUserManager):
@@ -11,10 +11,12 @@ class UserManager(BaseUserManager):
 
     def create_superuser(self, email, password=None, **extra):
         extra.setdefault('role', 'admin')
+        extra.setdefault('is_staff', True)
+        extra.setdefault('is_superuser', True)
         return self.create_user(email, password, **extra)
 
 
-class User(AbstractBaseUser):
+class User(AbstractBaseUser, PermissionsMixin):
     ROLE_CHOICES = [
         ('candidate', 'Candidate'),
         ('company', 'Company'),
@@ -25,6 +27,7 @@ class User(AbstractBaseUser):
     email = models.EmailField(max_length=254, unique=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
     is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
 
     objects = UserManager()
@@ -118,3 +121,30 @@ class SkillGap(models.Model):
 
     def __str__(self):
         return f"{self.candidate.user.name} - {self.skill_name} ({self.status})"
+
+
+class Notification(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    message = models.CharField(max_length=255)
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.name}: {self.message}"
+
+
+class JobMatch(models.Model):
+    """Bulk-match result: every candidate scored against every live job."""
+    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='matches')
+    candidate = models.ForeignKey(Candidate, on_delete=models.CASCADE, related_name='job_matches')
+    match_score = models.DecimalField(max_digits=5, decimal_places=2)
+    matched_skills = models.JSONField(default=list)
+    missing_skills = models.JSONField(default=list)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('job', 'candidate')
+        indexes = [models.Index(fields=['job', '-match_score'])]
+
+    def __str__(self):
+        return f"{self.candidate.user.name} ~ {self.job.title}: {self.match_score}"

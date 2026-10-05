@@ -2,15 +2,18 @@
 Django settings for skillbridge_backend project.
 """
 
+from datetime import timedelta
 from pathlib import Path
+
+from decouple import config, Csv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-5^1q^y_%h+hlp(s+ft_%p^zss1zcf1iv$(p+gu(8xekt$7bp9_'
+SECRET_KEY = config('SECRET_KEY')
 
-DEBUG = True
+DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost', cast=Csv())
 
 
 # Application definition
@@ -23,12 +26,15 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'rest_framework_simplejwt',   # CHANGE 1: JWT login
+    'rest_framework_simplejwt',
     'core',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -62,11 +68,11 @@ WSGI_APPLICATION = 'skillbridge_backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'skillbridge_db',
-        'USER': 'postgres',
-        'PASSWORD': '5432',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'NAME': config('DB_NAME'),
+        'USER': config('DB_USER'),
+        'PASSWORD': config('DB_PASSWORD'),
+        'HOST': config('DB_HOST', default='localhost'),
+        'PORT': config('DB_PORT', default='5432'),
     }
 }
 
@@ -103,16 +109,39 @@ USE_TZ = True
 # Static and media files
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
-# CHANGE 2: use our own User model for login
+
+# Use our own User model for login
 AUTH_USER_MODEL = 'core.User'
 
-# CHANGE 3: tell the API to read JWT tokens
+# Tell the API to read JWT tokens
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+    # Safe default: every endpoint needs a login unless it says otherwise
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
 }
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+}
+
+# Add your deployed frontend in .env, e.g.
+# CORS_ORIGINS=http://localhost:5173,https://skillbridge.vercel.app
+CORS_ALLOWED_ORIGINS = config(
+    'CORS_ORIGINS',
+    default='http://localhost:3000,http://localhost:5173',
+    cast=Csv(),
+)
+
+# Ollama (local AI): one place to configure it
+OLLAMA_URL = config('OLLAMA_URL', default='http://localhost:11434/api/generate')
+OLLAMA_MODEL = config('OLLAMA_MODEL', default='llama3')
