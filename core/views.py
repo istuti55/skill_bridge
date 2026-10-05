@@ -46,7 +46,7 @@ class LoginView(APIView):
         except User.DoesNotExist:
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
-        if not user.check_password(password):
+        if not user.check_password(password) or not user.is_active:
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
         refresh = RefreshToken.for_user(user)
@@ -150,7 +150,7 @@ class JobListCreateView(generics.ListCreateAPIView):
         return Job.objects.filter(status='approved').order_by('-posted_date')
 
     def perform_create(self, serializer):
-        company = Company.objects.get(user=self.request.user)
+        company = get_object_or_404(Company, user=self.request.user)
         serializer.save(company=company)
 
 
@@ -181,7 +181,7 @@ class ApplyToJobView(APIView):
         except Job.DoesNotExist:
             return Response({'error': 'Job not found or not approved'}, status=status.HTTP_404_NOT_FOUND)
 
-        candidate = Candidate.objects.get(user=request.user)
+        candidate = get_object_or_404(Candidate, user=request.user)
 
         if Application.objects.filter(candidate=candidate, job=job).exists():
             return Response({'error': 'You already applied to this job'}, status=status.HTTP_400_BAD_REQUEST)
@@ -220,7 +220,7 @@ class MyApplicationsView(generics.ListAPIView):
     permission_classes = [IsCandidate]
 
     def get_queryset(self):
-        candidate = Candidate.objects.get(user=self.request.user)
+        candidate = get_object_or_404(Candidate, user=self.request.user)
         return Application.objects.filter(candidate=candidate).order_by('-applied_date')
 
 
@@ -240,7 +240,7 @@ class MyProfileView(APIView):
     permission_classes = [IsCandidate]
 
     def get(self, request):
-        candidate = Candidate.objects.get(user=request.user)
+        candidate = get_object_or_404(Candidate, user=request.user)
         cv_path = candidate.cv_file_path
         return Response({
             'cv_file_path': f"{settings.MEDIA_URL}{cv_path}" if cv_path else '',
@@ -260,7 +260,7 @@ class JobMatchView(APIView):
         except Job.DoesNotExist:
             return Response({'error': 'Job not found or not approved'}, status=status.HTTP_404_NOT_FOUND)
 
-        candidate = Candidate.objects.get(user=request.user)
+        candidate = get_object_or_404(Candidate, user=request.user)
 
         candidate_skill_names = [
             s.get('name') if isinstance(s, dict) else s
@@ -341,7 +341,7 @@ class SkillGapView(APIView):
         except (Job.DoesNotExist, ValueError):
             return Response({'error': 'Job not found or not approved'}, status=status.HTTP_404_NOT_FOUND)
 
-        candidate = Candidate.objects.get(user=request.user)
+        candidate = get_object_or_404(Candidate, user=request.user)
 
         candidate_skill_names = [
             s.get('name') if isinstance(s, dict) else s
@@ -379,7 +379,7 @@ class CareerPathView(APIView):
     permission_classes = [IsCandidate]
 
     def get(self, request):
-        candidate = Candidate.objects.get(user=request.user)
+        candidate = get_object_or_404(Candidate, user=request.user)
 
         skill_names = [
             s.get('name') if isinstance(s, dict) else s
