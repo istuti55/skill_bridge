@@ -214,3 +214,16 @@ class UpdateApplicationStageView(APIView):
         application.save()
 
         return Response(ApplicationSerializer(application).data)
+
+class MyProfileView(APIView):
+    permission_classes = [IsCandidate]
+
+    def get(self, request):
+        candidate = Candidate.objects.get(user=request.user)
+        return Response({
+            'cv_file_path': candidate.cv_file_path,
+            'extracted_skills': candidate.extracted_skills,
+            'education': candidate.education,
+            'experience_years': float(candidate.experience_years),
+            'resume_score': candidate.resume_score,
+        })

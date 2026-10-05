@@ -2,13 +2,15 @@ from django.urls import path
 from .views import (
     RegisterView, LoginView, CVUploadView,
     JobListCreateView, JobApproveView,
-    ApplyToJobView, MyApplicationsView, JobApplicationsView, UpdateApplicationStageView
+    ApplyToJobView, MyApplicationsView, JobApplicationsView, UpdateApplicationStageView,
+    MyProfileView
 )
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
     path('login/', LoginView.as_view(), name='login'),
     path('candidates/upload-cv/', CVUploadView.as_view(), name='upload-cv'),
+    path('candidates/me/', MyProfileView.as_view(), name='my-profile'),
     path('jobs/', JobListCreateView.as_view(), name='jobs'),
     path('jobs/<int:pk>/approve/', JobApproveView.as_view(), name='job-approve'),
     path('jobs/<int:pk>/apply/', ApplyToJobView.as_view(), name='job-apply'),
