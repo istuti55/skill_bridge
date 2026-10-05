@@ -7,7 +7,7 @@ if AI_FOLDER not in sys.path:
 
 from matching.matcher import complete_match
 from matching.skill_normalizer import normalize_skill
-from intelligence.skill_gap import analyze_skill_gap
+from intelligence.skill_gap import analyze_required_skill_gap as analyze_skill_gap
 
 def build_weights(required_skills):
     """
