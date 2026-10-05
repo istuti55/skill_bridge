@@ -1,19 +1,23 @@
-from rest_framework import generics, status
-from rest_framework.response import Response
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.views import APIView
-from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework_simplejwt.tokens import RefreshToken
-from django.conf import settings
 import os
+import uuid
+
 import pymupdf as fitz  # PyMuPDF
+from django.conf import settings
+from django.shortcuts import get_object_or_404
+from rest_framework import generics, status
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import User, Candidate, Company, Job, Application, SkillGap, Notification
 from .serializers import UserRegisterSerializer, UserSerializer, JobSerializer, ApplicationSerializer
-from .ai_service import extract_cv_data
+from .ai_service import extract_cv_data, AIServiceError
 from .ai_bridge import get_match_and_gap, get_skill_gap, get_career_recommendation, normalize_skill
 from .permissions import IsCandidate, IsCompany, IsAdmin
 
+MAX_CV_SIZE = 5 * 1024 * 1024  # 5 MB
 
 STAGE_MESSAGES = {
     'shortlisted': 'You have been shortlisted for {job}.',
@@ -62,37 +66,69 @@ class CVUploadView(APIView):
         if not file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
-        if not file.name.endswith('.pdf'):
+        # 1. Check extension, size, and that it is a real PDF
+        if not file.name.lower().endswith('.pdf'):
             return Response({'error': 'Only PDF files are allowed'}, status=status.HTTP_400_BAD_REQUEST)
 
+        if file.size > MAX_CV_SIZE:
+            return Response({'error': 'File is too large (max 5 MB)'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if file.read(5) != b'%PDF-':
+            return Response({'error': 'This file is not a valid PDF'}, status=status.HTTP_400_BAD_REQUEST)
+        file.seek(0)
+
+        candidate = get_object_or_404(Candidate, user=request.user)
+
+        # 2. Save with a safe, unique name (never use the uploaded name)
         save_dir = os.path.join(settings.MEDIA_ROOT, 'cvs')
         os.makedirs(save_dir, exist_ok=True)
-        file_path = os.path.join(save_dir, file.name)
+        safe_name = f"{request.user.id}_{uuid.uuid4().hex}.pdf"
+        full_path = os.path.join(save_dir, safe_name)
 
-        with open(file_path, 'wb+') as destination:
+        with open(full_path, 'wb+') as destination:
             for chunk in file.chunks():
                 destination.write(chunk)
 
-        candidate = Candidate.objects.get(user=request.user)
-        candidate.cv_file_path = file_path
-        candidate.save()
+        # 3. Read the text. If anything fails, delete the file again.
+        try:
+            doc = fitz.open(full_path)
+            resume_text = "".join(page.get_text() for page in doc)
+            doc.close()
+        except Exception:
+            os.remove(full_path)
+            return Response({'error': 'Could not read this PDF'}, status=status.HTTP_400_BAD_REQUEST)
 
-        doc = fitz.open(file_path)
-        resume_text = ""
-        for page in doc:
-            resume_text += page.get_text()
-        doc.close()
+        if not resume_text.strip():
+            os.remove(full_path)
+            return Response(
+                {'error': 'No text found in this PDF (scanned images are not supported)'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        ai_result = extract_cv_data(resume_text)
+        # 4. Ask the AI. If it fails, keep the old profile untouched.
+        try:
+            ai_result = extract_cv_data(resume_text)
+        except AIServiceError as e:
+            os.remove(full_path)
+            return Response({'error': str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
-        candidate.extracted_skills = ai_result.get('skills', [])
-        candidate.education = ai_result.get('education', [])
-        candidate.experience_years = ai_result.get('experience_years', 0)
+        skills = ai_result.get('skills', [])
+        education = ai_result.get('education', [])
+        try:
+            experience = float(ai_result.get('experience_years', 0))
+        except (TypeError, ValueError):
+            experience = 0
+
+        # 5. Save to the candidate (relative path, not the server path)
+        candidate.cv_file_path = f"cvs/{safe_name}"
+        candidate.extracted_skills = skills if isinstance(skills, list) else []
+        candidate.education = education if isinstance(education, list) else []
+        candidate.experience_years = max(0, min(experience, 99.9))
         candidate.save()
 
         return Response({
             'message': 'CV uploaded successfully',
-            'cv_file_path': candidate.cv_file_path
+            'cv_file_path': f"{settings.MEDIA_URL}{candidate.cv_file_path}",
         }, status=status.HTTP_200_OK)
 
 
@@ -205,8 +241,9 @@ class MyProfileView(APIView):
 
     def get(self, request):
         candidate = Candidate.objects.get(user=request.user)
+        cv_path = candidate.cv_file_path
         return Response({
-            'cv_file_path': candidate.cv_file_path,
+            'cv_file_path': f"{settings.MEDIA_URL}{cv_path}" if cv_path else '',
             'extracted_skills': candidate.extracted_skills,
             'education': candidate.education,
             'experience_years': float(candidate.experience_years),
