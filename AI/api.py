@@ -68,6 +68,7 @@ async def add_security_headers(request, call_next):
 # --------------------------------------------------
 
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB
+MAX_JOB_DESCRIPTION_LENGTH = 10_000
 
 ALLOWED_EXTENSIONS = {
     ".pdf",
@@ -130,6 +131,11 @@ async def analyze(
         raise HTTPException(
             status_code=400,
             detail="Job description cannot be empty."
+        )
+    if len(job_description) > MAX_JOB_DESCRIPTION_LENGTH:
+        raise HTTPException(
+            status_code=400,
+            detail="Job description is too long. Maximum length is 10,000 characters."
         )
 
     # Check filename
