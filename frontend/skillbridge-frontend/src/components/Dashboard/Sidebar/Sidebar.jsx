@@ -25,7 +25,7 @@ function Sidebar({ isOpen, setIsOpen }) {
     {
       icon: <Brain size={20} />,
       title: "AI Analysis",
-      path: "/analysis",
+      path: "/ai-analysis",
     },
     {
       icon: <Briefcase size={20} />,
