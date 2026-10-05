@@ -16,6 +16,8 @@ from .serializers import UserRegisterSerializer, UserSerializer, JobSerializer, 
 from .ai_service import extract_cv_data, AIServiceError
 from .ai_bridge import get_match_and_gap, get_skill_gap, get_career_recommendation, normalize_skill
 from .permissions import IsCandidate, IsCompany, IsAdmin
+from .scoring import calculate_resume_score
+from .resources import get_resource_links, estimate_weeks
 
 MAX_CV_SIZE = 5 * 1024 * 1024  # 5 MB
 
@@ -119,16 +121,22 @@ class CVUploadView(APIView):
         except (TypeError, ValueError):
             experience = 0
 
+        skills = skills if isinstance(skills, list) else []
+        education = education if isinstance(education, list) else []
+        experience = max(0, min(experience, 99.9))
+
         # 5. Save to the candidate (relative path, not the server path)
         candidate.cv_file_path = f"cvs/{safe_name}"
-        candidate.extracted_skills = skills if isinstance(skills, list) else []
-        candidate.education = education if isinstance(education, list) else []
-        candidate.experience_years = max(0, min(experience, 99.9))
+        candidate.extracted_skills = skills
+        candidate.education = education
+        candidate.experience_years = experience
+        candidate.resume_score = calculate_resume_score(skills, education, experience, has_cv=True)
         candidate.save()
 
         return Response({
             'message': 'CV uploaded successfully',
             'cv_file_path': f"{settings.MEDIA_URL}{candidate.cv_file_path}",
+            'resume_score': candidate.resume_score,
         }, status=status.HTTP_200_OK)
 
 
@@ -241,6 +249,17 @@ class MyProfileView(APIView):
 
     def get(self, request):
         candidate = get_object_or_404(Candidate, user=request.user)
+
+        # Older profiles uploaded before scoring existed: calculate it now
+        if candidate.resume_score is None and candidate.extracted_skills:
+            candidate.resume_score = calculate_resume_score(
+                candidate.extracted_skills,
+                candidate.education,
+                candidate.experience_years,
+                has_cv=bool(candidate.cv_file_path),
+            )
+            candidate.save()
+
         cv_path = candidate.cv_file_path
         return Response({
             'cv_file_path': f"{settings.MEDIA_URL}{cv_path}" if cv_path else '',
@@ -360,16 +379,18 @@ class SkillGapView(APIView):
             if not name:
                 continue
             skill_status = 'strong' if normalize_skill(name) in matched else 'missing'
-            record, _ = SkillGap.objects.update_or_create(
+            # Learning links only for skills the candidate still needs
+            links = get_resource_links(name) if skill_status == 'missing' else []
+            SkillGap.objects.update_or_create(
                 candidate=candidate,
                 job=job,
                 skill_name=name,
-                defaults={'status': skill_status},
+                defaults={'status': skill_status, 'resource_links': links},
             )
             report.append({
                 'skill_name': name,
                 'status': skill_status,
-                'resource_links': record.resource_links,
+                'resource_links': links,
             })
 
         return Response(report)
@@ -438,8 +459,8 @@ class CareerPathView(APIView):
             roadmap.append({
                 'skill': name,
                 'priority': i,
-                'est_weeks': None,   # the AI does not give this yet
-                'resources': [],     # the AI does not give this yet
+                'est_weeks': estimate_weeks(name),   # rough estimate
+                'resources': get_resource_links(name),
             })
 
         return Response({
