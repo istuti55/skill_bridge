@@ -8,11 +8,20 @@ from django.conf import settings
 import os
 import pymupdf as fitz  # PyMuPDF
 
-from .models import User, Candidate, Company, Job, Application, SkillGap , Notification
+from .models import User, Candidate, Company, Job, Application, SkillGap, Notification
 from .serializers import UserRegisterSerializer, UserSerializer, JobSerializer, ApplicationSerializer
 from .ai_service import extract_cv_data
-from .ai_bridge import get_match_and_gap, get_skill_gap, get_career_recommendation
+from .ai_bridge import get_match_and_gap, get_skill_gap, get_career_recommendation, normalize_skill
 from .permissions import IsCandidate, IsCompany, IsAdmin
+
+
+STAGE_MESSAGES = {
+    'shortlisted': 'You have been shortlisted for {job}.',
+    'interview_scheduled': 'An interview has been scheduled for {job}.',
+    'offer_extended': 'You have received an offer for {job}.',
+    'hired': 'Congratulations! You have been hired for {job}.',
+    'rejected': 'Your application for {job} was not successful.',
+}
 
 
 class RegisterView(generics.CreateAPIView):
@@ -191,30 +200,6 @@ class JobApplicationsView(generics.ListAPIView):
         ).order_by('-match_score')
 
 
-class UpdateApplicationStageView(APIView):
-    permission_classes = [IsCompany]
-
-    def patch(self, request, pk):
-        try:
-            # Only applications that belong to this company's own jobs
-            application = Application.objects.get(pk=pk, job__company__user=request.user)
-        except Application.DoesNotExist:
-            return Response({'error': 'Application not found'}, status=status.HTTP_404_NOT_FOUND)
-
-        new_stage = request.data.get('recruitment_stage')
-        valid_stages = [choice[0] for choice in Application.STAGE_CHOICES]
-        if new_stage not in valid_stages:
-            return Response({'error': 'Invalid stage'}, status=status.HTTP_400_BAD_REQUEST)
-
-        application.recruitment_stage = new_stage
-        if request.data.get('interview_date'):
-            application.interview_date = request.data.get('interview_date')
-        if request.data.get('rejection_reason'):
-            application.rejection_reason = request.data.get('rejection_reason')
-        application.save()
-
-        return Response(ApplicationSerializer(application).data)
-
 class MyProfileView(APIView):
     permission_classes = [IsCandidate]
 
@@ -262,7 +247,7 @@ class JobMatchView(APIView):
         for skill in job.required_skills:
             name = skill.get('name') if isinstance(skill, dict) else skill
             weight = skill.get('weight') if isinstance(skill, dict) else None
-            has_skill = bool(name) and name.lower().strip() in matched
+            has_skill = bool(name) and normalize_skill(name) in matched
             breakdown.append({
                 'skill': name,
                 'candidate_has': has_skill,
@@ -276,6 +261,7 @@ class JobMatchView(APIView):
             'breakdown': breakdown,
             'scores': result['breakdown'],
         })
+
 
 class RankedCandidatesView(APIView):
     permission_classes = [IsCompany]
@@ -303,6 +289,8 @@ class RankedCandidatesView(APIView):
             }
             for app in applications
         ])
+
+
 class SkillGapView(APIView):
     permission_classes = [IsCandidate]
 
@@ -334,7 +322,7 @@ class SkillGapView(APIView):
         for name in job_skill_names:
             if not name:
                 continue
-            skill_status = 'strong' if name.lower().strip() in matched else 'missing'
+            skill_status = 'strong' if normalize_skill(name) in matched else 'missing'
             record, _ = SkillGap.objects.update_or_create(
                 candidate=candidate,
                 job=job,
@@ -348,6 +336,8 @@ class SkillGapView(APIView):
             })
 
         return Response(report)
+
+
 class CareerPathView(APIView):
     permission_classes = [IsCandidate]
 
@@ -422,21 +412,6 @@ class CareerPathView(APIView):
         })
 
 
-def get_career_recommendation(candidate_skills, experience, education, missing_skills):
-    # Imported here so the server still starts even if Ollama is not ready
-    from intelligence.recommender import generate_career_recommendation
-    return generate_career_recommendation(
-        candidate_skills, experience, education, missing_skills
-    )
-STAGE_MESSAGES = {
-    'shortlisted': 'You have been shortlisted for {job}.',
-    'interview_scheduled': 'An interview has been scheduled for {job}.',
-    'offer_extended': 'You have received an offer for {job}.',
-    'hired': 'Congratulations! You have been hired for {job}.',
-    'rejected': 'Your application for {job} was not successful.',
-}
-
-
 class UpdateApplicationStageView(APIView):
     permission_classes = [IsCompany]
 
@@ -467,6 +442,8 @@ class UpdateApplicationStageView(APIView):
             )
 
         return Response(ApplicationSerializer(application).data)
+
+
 class NotificationListView(APIView):
     permission_classes = [IsAuthenticated]
 
