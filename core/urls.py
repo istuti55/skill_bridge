@@ -3,7 +3,7 @@ from .views import (
     RegisterView, LoginView, CVUploadView,
     JobListCreateView, JobApproveView,
     ApplyToJobView, MyApplicationsView, JobApplicationsView, UpdateApplicationStageView,
-    MyProfileView, JobMatchView
+    MyProfileView, JobMatchView, RankedCandidatesView
 )
 
 urlpatterns = [
@@ -15,6 +15,7 @@ urlpatterns = [
     path('jobs/<int:pk>/approve/', JobApproveView.as_view(), name='job-approve'),
     path('jobs/<int:pk>/apply/', ApplyToJobView.as_view(), name='job-apply'),
     path('jobs/<int:pk>/match/', JobMatchView.as_view(), name='job-match'),
+    path('jobs/<int:pk>/ranked-candidates/', RankedCandidatesView.as_view(), name='ranked-candidates'),
     path('jobs/<int:pk>/applications/', JobApplicationsView.as_view(), name='job-applications'),
     path('applications/mine/', MyApplicationsView.as_view(), name='my-applications'),
     path('applications/<int:pk>/', UpdateApplicationStageView.as_view(), name='update-application'),

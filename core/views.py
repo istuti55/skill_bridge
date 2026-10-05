@@ -276,4 +276,30 @@ class JobMatchView(APIView):
             'breakdown': breakdown,
             'scores': result['breakdown'],
         })
-        
+
+class RankedCandidatesView(APIView):
+    permission_classes = [IsCompany]
+
+    def get(self, request, pk):
+        try:
+            # Only the company's own job
+            job = Job.objects.get(pk=pk, company__user=request.user)
+        except Job.DoesNotExist:
+            return Response({'error': 'Job not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        applications = (
+            Application.objects
+            .filter(job=job)
+            .select_related('candidate__user')
+            .order_by('-match_score')
+        )
+
+        return Response([
+            {
+                'candidate_id': app.candidate.id,
+                'name': app.candidate.user.name,
+                'match_score': float(app.match_score),
+                'recruitment_stage': app.recruitment_stage,
+            }
+            for app in applications
+        ])
