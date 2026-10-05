@@ -1,7 +1,7 @@
 {
     "candidate": {
         "personal": {
-            "name": "Alex Morgan",
+            "name": "ALEX MORGAN",
             "email": "alex.morgan@email.com",
             "phone": "(555) 019-2834",
             "location": "New York, NY"
@@ -24,16 +24,12 @@
             "RESTful APIs"
         ],
         "education": [
-            {
-                "title": "Bachelor of Science in Computer Science",
-                "institution": "State University",
-                "degree": "Bachelor of Science",
-                "gpa": "3.8 / 4.0"
-            }
+            "Bachelor of Science in Computer Science — State University",
+            "GPA: 3.8 / 4.0"
         ],
         "experience": [
             {
-                "title": "Software Engineer — TechCorp Solutions",
+                "title": "Software Engineer",
                 "company": "TechCorp Solutions",
                 "start_date": "June 2023",
                 "end_date": "Present",
@@ -41,7 +37,7 @@
                 "details": "Led the backend migration to microservices architecture, reducing server response latency by 25%. Developed and maintained high-traffic RESTful APIs serving over 500,000 active monthly users. Mentored junior developers and spearheaded code review practices, improving overall codebase quality score by 15%."
             },
             {
-                "title": "Junior Web Developer — Apex Digital Agency",
+                "title": "Junior Web Developer",
                 "company": "Apex Digital Agency",
                 "start_date": "August 2021",
                 "end_date": "May 2023",
@@ -164,10 +160,12 @@
                 "priority": "high",
                 "topics": [
                     "Introduction to FastAPI",
-                    "Creating and Running a FastAPI App",
-                    "FastAPI Routing and Middlewares",
-                    "FastAPI Request and Response Handling",
-                    "FastAPI Database Integration"
+                    "Setting up FastAPI Project",
+                    "Defining Routes and Endpoints",
+                    "Handling Requests and Responses",
+                    "Error Handling and Debugging",
+                    "Integration with Databases (e.g. PostgreSQL)",
+                    "Deployment and Testing using Docker and CI/CD pipelines"
                 ]
             }
         ],
