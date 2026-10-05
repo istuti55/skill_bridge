@@ -11,7 +11,7 @@ import pymupdf as fitz  # PyMuPDF
 from .models import User, Candidate, Company, Job, Application, SkillGap
 from .serializers import UserRegisterSerializer, UserSerializer, JobSerializer, ApplicationSerializer
 from .ai_service import extract_cv_data
-from .ai_bridge import get_match_and_gap, get_skill_gap
+from .ai_bridge import get_match_and_gap, get_skill_gap, get_career_recommendation
 from .permissions import IsCandidate, IsCompany, IsAdmin
 
 
@@ -348,3 +348,83 @@ class SkillGapView(APIView):
             })
 
         return Response(report)
+class CareerPathView(APIView):
+    permission_classes = [IsCandidate]
+
+    def get(self, request):
+        candidate = Candidate.objects.get(user=request.user)
+
+        skill_names = [
+            s.get('name') if isinstance(s, dict) else s
+            for s in candidate.extracted_skills
+        ]
+        if not skill_names:
+            return Response(
+                {'error': 'Upload your CV first so we can read your skills'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Optional: pass ?job_id=1 to include the skills missing for that job
+        missing = []
+        job_id = request.query_params.get('job_id')
+        if job_id:
+            try:
+                job = Job.objects.get(pk=job_id, status='approved')
+                job_skill_names = [
+                    s.get('name') if isinstance(s, dict) else s
+                    for s in job.required_skills
+                ]
+                missing = get_skill_gap(skill_names, job_skill_names)['missing_skills']
+            except (Job.DoesNotExist, ValueError):
+                pass
+
+        try:
+            ai = get_career_recommendation(
+                skill_names,
+                float(candidate.experience_years),
+                candidate.education,
+                missing,
+            )
+        except Exception:
+            return Response(
+                {'error': 'The AI service is not available. Make sure Ollama is running.'},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
+
+        reason = ai.get('reason', '')
+
+        suggestions = []
+        for role in ai.get('recommended_roles', []):
+            if isinstance(role, dict):
+                title = role.get('title') or role.get('name') or role.get('role') or str(role)
+                role_reason = role.get('reason') or role.get('description') or reason
+                suggestions.append({'title': title, 'reason': role_reason})
+            else:
+                suggestions.append({'title': str(role), 'reason': reason})
+
+        roadmap = []
+        for i, item in enumerate(ai.get('skill_priorities', []), start=1):
+            if isinstance(item, dict):
+                name = item.get('skill') or item.get('name') or str(item)
+            else:
+                name = str(item)
+            roadmap.append({
+                'skill': name,
+                'priority': i,
+                'est_weeks': None,   # the AI does not give this yet
+                'resources': [],     # the AI does not give this yet
+            })
+
+        return Response({
+            'suggestions': suggestions,
+            'roadmap': roadmap,
+            'learning_path': ai.get('learning_path', []),
+        })
+
+
+def get_career_recommendation(candidate_skills, experience, education, missing_skills):
+    # Imported here so the server still starts even if Ollama is not ready
+    from intelligence.recommender import generate_career_recommendation
+    return generate_career_recommendation(
+        candidate_skills, experience, education, missing_skills
+    )

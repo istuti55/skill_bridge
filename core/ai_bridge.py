@@ -35,3 +35,11 @@ def get_match_and_gap(candidate_skills, candidate_experience, candidate_educatio
 
 def get_skill_gap(candidate_skills, job_skills):
     return analyze_skill_gap(candidate_skills, job_skills)
+
+
+def get_career_recommendation(candidate_skills, experience, education, missing_skills):
+    # Imported here so the server still starts even if Ollama is not ready
+    from intelligence.recommender import generate_career_recommendation
+    return generate_career_recommendation(
+        candidate_skills, experience, education, missing_skills
+    )
