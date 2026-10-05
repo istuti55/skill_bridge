@@ -64,17 +64,23 @@ async def add_security_headers(request, call_next):
 
 
 # --------------------------------------------------
-# File Validation
+# Request Limits
 # --------------------------------------------------
 
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB
+
 MAX_JOB_DESCRIPTION_LENGTH = 10_000
+
 
 ALLOWED_EXTENSIONS = {
     ".pdf",
     ".docx"
 }
 
+
+# --------------------------------------------------
+# File Validation
+# --------------------------------------------------
 
 def is_valid_file_content(extension, file_data):
     """
@@ -132,6 +138,8 @@ async def analyze(
             status_code=400,
             detail="Job description cannot be empty."
         )
+
+    # Validate job description length
     if len(job_description) > MAX_JOB_DESCRIPTION_LENGTH:
         raise HTTPException(
             status_code=400,
