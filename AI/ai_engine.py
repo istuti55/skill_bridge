@@ -327,14 +327,14 @@ def analyze_candidate(pdf_path, job_description):
     # ==========================================================
 
     match_result = complete_match(
-        candidate_skills,
-        job_skills,
-        candidate_experience_years,
-        required_experience,
-        candidate_education,
-        required_education
-    )
-
+    candidate_skills,
+    required_skills,
+    preferred_skills,
+    candidate_experience_years,
+    required_experience,
+    candidate_education,
+    required_education
+)
     print("✓ Match calculated")
 
 

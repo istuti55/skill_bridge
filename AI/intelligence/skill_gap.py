@@ -1,17 +1,25 @@
+from matching.skill_normalizer import normalize_skill
+
+
 def analyze_skill_gap(candidate_skills, job_skills):
     """
     Identify skills required by the job
     that are missing from the candidate.
+
+    Uses the same skill normalization rules
+    as the matching engine.
     """
 
     candidate = {
-        skill.lower().strip()
+        normalize_skill(skill)
         for skill in candidate_skills
+        if normalize_skill(skill)
     }
 
     required = {
-        skill.lower().strip()
+        normalize_skill(skill)
         for skill in job_skills
+        if normalize_skill(skill)
     }
 
     matched = sorted(candidate.intersection(required))

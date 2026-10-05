@@ -47,7 +47,12 @@ Use EXACTLY this structure:
             "details": ""
         }}
     ],
-    "projects": [],
+    "projects": [
+        {{
+            "title": "",
+            "description": ""
+        }}
+    ],
     "certifications": []
 }}
 
@@ -77,7 +82,19 @@ IMPORTANT RULES:
 7. If no dates are available, leave the date fields empty.
    Do NOT guess dates.
 
-8. Return valid JSON only.
+8. Extract EVERY clearly identified project from the resume.
+
+9. For EVERY project:
+   - Put the project name in "title".
+   - Put the project's technologies, purpose, features, implementation details,
+     deployment details, and other relevant information in "description".
+   - Do not put ordinary job responsibilities into the projects section.
+   - Do not invent projects.
+
+10. If the resume contains no projects, return:
+    "projects": []
+
+11. Return valid JSON only.
 
 RESUME:
 {resume_text}

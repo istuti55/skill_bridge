@@ -25,14 +25,15 @@
         "education": [
             {
                 "title": "Bachelor of Science in Computer Science",
-                "institution": "State University",
-                "degree": "Bachelor's",
-                "gpa": "3.8 / 4.0"
+                "university": "State University",
+                "degree": "Bachelor of Science",
+                "gpa": "3.8 / 4.0",
+                "date": "May 2021"
             }
         ],
         "experience": [
             {
-                "title": "Software Engineer",
+                "title": "Software Engineer — TechCorp Solutions",
                 "company": "TechCorp Solutions",
                 "start_date": "June 2023",
                 "end_date": "Present",
@@ -40,7 +41,7 @@
                 "details": "Led the backend migration to microservices architecture, reducing server response latency by 25%. Developed and maintained high-traffic RESTful APIs serving over 500,000 active monthly users. Mentored junior developers and spearheaded code review practices, improving overall codebase quality score by 15%."
             },
             {
-                "title": "Junior Web Developer",
+                "title": "Junior Web Developer — Apex Digital Agency",
                 "company": "Apex Digital Agency",
                 "start_date": "August 2021",
                 "end_date": "May 2023",
@@ -48,12 +49,7 @@
                 "details": "Built responsive user interfaces using React and Tailwind CSS for 12+ client websites. Integrated third-party payment gateways (Stripe, PayPal), boosting checkout conversion rates by 10%. Collaborated with UX designers to ensure WCAG accessibility compliance across all web products."
             }
         ],
-        "projects": [
-            {
-                "title": "TaskFlow (Task Management App)",
-                "description": "Built a real-time productivity app using React, Node.js, and WebSockets. Hosted on AWS with automated CI/CD deployment via GitHub Actions."
-            }
-        ],
+        "projects": [],
         "certifications": []
     },
     "job": {
@@ -84,9 +80,8 @@
         "unsupported_skills": [
             "Python",
             "JavaScript (ES6+)",
-            "TypeScript",
             "SQL",
-            "HTML5/CSS3",
+            "Node.js",
             "Django",
             "PostgreSQL",
             "Docker",
@@ -97,50 +92,47 @@
         "verification_required": true
     },
     "matching": {
-        "overall_score": 79.77,
-        "skills_score": 73.96,
+        "overall_score": 87.0,
+        "skills_score": 84.0,
         "experience_score": 100.0,
-        "education_score": 80.0,
+        "education_score": 82.0,
         "matched_skills": [
+            "aws",
             "docker",
             "git",
             "python",
             "sql"
         ],
         "missing_skills": [
-            "aws",
             "fastapi"
         ],
-        "recommendation": "Moderate Match"
+        "recommendation": "Strong Match"
     },
     "skill_gap": {
         "matched_skills": [
+            "aws",
             "docker",
             "git",
             "python",
             "sql"
         ],
         "missing_skills": [
-            "aws",
             "fastapi"
         ],
-        "skill_gap_percentage": 33.33
+        "skill_gap_percentage": 16.67
     },
     "career_recommendation": {
         "recommended_roles": [
             "Cloud Architect",
-            "Backend Engineer",
             "Full Stack Developer"
         ],
         "skill_priorities": [
-            "AWS",
-            "FastAPI"
+            "fastapi",
+            "CI/CD pipelines"
         ],
         "learning_path": [
-            "AWS Certified Cloud Practitioner - Associate",
-            "FastAPI Development Course",
-            "AWS SDK for Python (Boto3)"
+            "AWS (S3, EC2, Lambda), CI/CD pipelines, fastapi"
         ],
-        "reason": "Based on the candidate's experience and missing skills, I recommend roles that leverage their backend expertise and fill the gaps in their skillset. Cloud Architect and Backend Engineer roles are well-suited for the candidate's skills and experience. However, to be competitive, they need to acquire AWS and FastAPI skills."
+        "reason": "Based on the candidate's experience and skills, we recommend exploring roles that leverage their cloud and backend expertise. Focusing on learning fastapi will further enhance their backend development skills and increase their competitiveness in the job market."
     }
 }
