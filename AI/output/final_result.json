@@ -1,7 +1,7 @@
 {
     "candidate": {
         "personal": {
-            "name": "ALEX MORGAN",
+            "name": "Alex Morgan",
             "email": "alex.morgan@email.com",
             "phone": "(555) 019-2834",
             "location": "New York, NY"
@@ -27,25 +27,26 @@
             {
                 "title": "Bachelor of Science in Computer Science",
                 "institution": "State University",
+                "degree": "Bachelor of Science",
                 "gpa": "3.8 / 4.0"
             }
         ],
         "experience": [
             {
-                "title": "Software Engineer",
+                "title": "Software Engineer — TechCorp Solutions",
                 "company": "TechCorp Solutions",
-                "current": true,
-                "details": "Led the backend migration to microservices architecture, reducing server response latency by 25%. Developed and maintained high-traffic RESTful APIs serving over 500,000 active monthly users. Mentored junior developers and spearheaded code review practices, improving overall codebase quality score by 15%.",
                 "start_date": "June 2023",
-                "end_date": "Present"
+                "end_date": "Present",
+                "current": true,
+                "details": "Led the backend migration to microservices architecture, reducing server response latency by 25%. Developed and maintained high-traffic RESTful APIs serving over 500,000 active monthly users. Mentored junior developers and spearheaded code review practices, improving overall codebase quality score by 15%."
             },
             {
-                "title": "Junior Web Developer",
+                "title": "Junior Web Developer — Apex Digital Agency",
                 "company": "Apex Digital Agency",
-                "current": false,
-                "details": "Built responsive user interfaces using React and Tailwind CSS for 12+ client websites. Integrated third-party payment gateways (Stripe, PayPal), boosting checkout conversion rates by 10%. Collaborated with UX designers to ensure WCAG accessibility compliance across all web products.",
                 "start_date": "August 2021",
-                "end_date": "May 2023"
+                "end_date": "May 2023",
+                "current": false,
+                "details": "Built responsive user interfaces using React and Tailwind CSS for 12+ client websites. Integrated third-party payment gateways (Stripe, PayPal), boosting checkout conversion rates by 10%. Collaborated with UX designers to ensure WCAG accessibility compliance across all web products."
             }
         ],
         "projects": [
@@ -163,10 +164,10 @@
                 "priority": "high",
                 "topics": [
                     "Introduction to FastAPI",
-                    "FastAPI Fundamentals",
-                    "Building RESTful APIs with FastAPI",
-                    "FastAPI Routing and Middleware",
-                    "Deploying FastAPI Applications"
+                    "Creating and Running a FastAPI App",
+                    "FastAPI Routing and Middlewares",
+                    "FastAPI Request and Response Handling",
+                    "FastAPI Database Integration"
                 ]
             }
         ],
