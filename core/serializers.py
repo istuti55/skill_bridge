@@ -1,5 +1,7 @@
+from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
-from .models import User, Candidate, Company
+
+from .models import User, Candidate, Company, Job, Application
 
 
 class UserRegisterSerializer(serializers.ModelSerializer):
@@ -8,6 +10,18 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'name', 'email', 'password', 'role']
+
+    def validate_role(self, value):
+        # Admins can only be created from the terminal (createsuperuser)
+        if value not in ('candidate', 'company'):
+            raise serializers.ValidationError(
+                "Role must be 'candidate' or 'company'."
+            )
+        return value
+
+    def validate_password(self, value):
+        validate_password(value)
+        return value
 
     def create(self, validated_data):
         password = validated_data.pop('password')
@@ -27,13 +41,13 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'name', 'email', 'role', 'date_joined']
-from .models import Candidate
+
 
 class CVUploadSerializer(serializers.ModelSerializer):
     class Meta:
         model = Candidate
         fields = ['cv_file_path']
-from .models import Job, Application
+
 
 class JobSerializer(serializers.ModelSerializer):
     company_name = serializers.CharField(source='company.company_name', read_only=True)
