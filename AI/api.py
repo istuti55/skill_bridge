@@ -100,6 +100,133 @@ def is_valid_file_content(extension, file_data):
 
 
 # --------------------------------------------------
+# Response Standardization
+# --------------------------------------------------
+
+def normalize_analysis_result(result):
+    """
+    Ensure the AI analysis response always follows
+    the standard SkillBridge API structure.
+    """
+
+    result = result if isinstance(result, dict) else {}
+
+    candidate = result.get("candidate")
+    if not isinstance(candidate, dict):
+        candidate = {}
+
+    job = result.get("job")
+    if not isinstance(job, dict):
+        job = {}
+
+    credibility = result.get("credibility")
+    if not isinstance(credibility, dict):
+        credibility = {}
+
+    matching = result.get("matching")
+    if not isinstance(matching, dict):
+        matching = {}
+
+    skill_gap = result.get("skill_gap")
+    if not isinstance(skill_gap, dict):
+        skill_gap = {}
+
+    career_recommendation = result.get("career_recommendation")
+    if not isinstance(career_recommendation, dict):
+        career_recommendation = {}
+
+    # Matching defaults
+    matching.setdefault("overall_score", 0.0)
+    matching.setdefault("skills_score", 0.0)
+    matching.setdefault("experience_score", 0.0)
+    matching.setdefault("education_score", 0.0)
+    matching.setdefault("matched_skills", [])
+    matching.setdefault("missing_skills", [])
+    matching.setdefault("recommendation", "")
+
+    if not isinstance(matching["matched_skills"], list):
+        matching["matched_skills"] = []
+
+    if not isinstance(matching["missing_skills"], list):
+        matching["missing_skills"] = []
+
+    # Required skill gap
+    required = skill_gap.get("required")
+
+    if not isinstance(required, dict):
+        required = {}
+
+    required.setdefault("matched_skills", [])
+    required.setdefault("missing_skills", [])
+    required.setdefault("skill_gap_percentage", 0.0)
+
+    # Preferred skill gap
+    preferred = skill_gap.get("preferred")
+
+    if not isinstance(preferred, dict):
+        preferred = {}
+
+    preferred.setdefault("matched_skills", [])
+    preferred.setdefault("missing_skills", [])
+    preferred.setdefault("skill_gap_percentage", 0.0)
+
+    skill_gap["required"] = required
+    skill_gap["preferred"] = preferred
+
+    skill_gap.setdefault("learning_priorities", [])
+
+    if not isinstance(skill_gap["learning_priorities"], list):
+        skill_gap["learning_priorities"] = []
+
+    # Career recommendation defaults
+    career_recommendation.setdefault("recommended_roles", [])
+    career_recommendation.setdefault("skill_priorities", [])
+    career_recommendation.setdefault("learning_path", [])
+    career_recommendation.setdefault("reason", "")
+
+    if not isinstance(
+        career_recommendation["recommended_roles"],
+        list
+    ):
+        career_recommendation["recommended_roles"] = []
+
+    if not isinstance(
+        career_recommendation["skill_priorities"],
+        list
+    ):
+        career_recommendation["skill_priorities"] = []
+
+    if not isinstance(
+        career_recommendation["learning_path"],
+        list
+    ):
+        career_recommendation["learning_path"] = []
+
+    return {
+        "candidate": candidate,
+        "job": job,
+        "credibility": credibility,
+        "matching": matching,
+        "skill_gap": skill_gap,
+        "career_recommendation": career_recommendation
+    }
+
+
+def error_response(code, message):
+    """
+    Return a standardized API error response.
+    """
+
+    return {
+        "success": False,
+        "error": {
+            "code": code,
+            "message": message
+        }
+    }
+
+
+# --------------------------------------------------
 # Root Endpoint
 # --------------------------------------------------
 
@@ -132,89 +259,160 @@ async def analyze(
     resume: UploadFile = File(...),
     job_description: str = Form(...)
 ):
-    # Validate job description
+
+    # --------------------------------------------------
+    # Validate Job Description
+    # --------------------------------------------------
+
     if not job_description or not job_description.strip():
         raise HTTPException(
             status_code=400,
-            detail="Job description cannot be empty."
+            detail=error_response(
+                "EMPTY_JOB_DESCRIPTION",
+                "Job description cannot be empty."
+            )
         )
 
-    # Validate job description length
+    # --------------------------------------------------
+    # Validate Job Description Length
+    # --------------------------------------------------
+
     if len(job_description) > MAX_JOB_DESCRIPTION_LENGTH:
         raise HTTPException(
             status_code=400,
-            detail="Job description is too long. Maximum length is 10,000 characters."
+            detail=error_response(
+                "JOB_DESCRIPTION_TOO_LONG",
+                "Job description is too long. Maximum length is 10,000 characters."
+            )
         )
 
-    # Check filename
+    # --------------------------------------------------
+    # Check Filename
+    # --------------------------------------------------
+
     if not resume.filename:
         raise HTTPException(
             status_code=400,
-            detail="Resume filename is missing."
+            detail=error_response(
+                "MISSING_FILENAME",
+                "Resume filename is missing."
+            )
         )
 
-    # Check file extension
-    extension = os.path.splitext(resume.filename)[1].lower()
+    # --------------------------------------------------
+    # Check File Extension
+    # --------------------------------------------------
+
+    extension = os.path.splitext(
+        resume.filename
+    )[1].lower()
 
     if extension not in ALLOWED_EXTENSIONS:
         raise HTTPException(
             status_code=400,
-            detail="Unsupported file type. Only PDF and DOCX files are allowed."
+            detail=error_response(
+                "UNSUPPORTED_FILE_TYPE",
+                "Unsupported file type. Only PDF and DOCX files are allowed."
+            )
         )
 
-    # Read uploaded file
+    # --------------------------------------------------
+    # Read Uploaded File
+    # --------------------------------------------------
+
     resume_data = await resume.read()
 
-    # Check empty file
+    # --------------------------------------------------
+    # Check Empty File
+    # --------------------------------------------------
+
     if not resume_data:
         raise HTTPException(
             status_code=400,
-            detail="Uploaded resume is empty."
+            detail=error_response(
+                "EMPTY_RESUME",
+                "Uploaded resume is empty."
+            )
         )
 
-    # Check file size
+    # --------------------------------------------------
+    # Check File Size
+    # --------------------------------------------------
+
     if len(resume_data) > MAX_FILE_SIZE:
         raise HTTPException(
             status_code=400,
-            detail="Resume file is too large. Maximum size is 5 MB."
+            detail=error_response(
+                "FILE_TOO_LARGE",
+                "Resume file is too large. Maximum size is 5 MB."
+            )
         )
 
-    # Validate actual file content
-    if not is_valid_file_content(extension, resume_data):
+    # --------------------------------------------------
+    # Validate Actual File Content
+    # --------------------------------------------------
+
+    if not is_valid_file_content(
+        extension,
+        resume_data
+    ):
         raise HTTPException(
             status_code=400,
-            detail="File content does not match the selected file type."
+            detail=error_response(
+                "INVALID_FILE_CONTENT",
+                "File content does not match the selected file type."
+            )
         )
 
-    # Create temporary file
+    # --------------------------------------------------
+    # Create Temporary File
+    # --------------------------------------------------
+
     with tempfile.NamedTemporaryFile(
         delete=False,
         suffix=extension
     ) as temp_file:
 
         temp_file.write(resume_data)
+
         temp_resume_path = temp_file.name
 
+    # --------------------------------------------------
+    # Run AI Analysis
+    # --------------------------------------------------
+
     try:
-        # Run existing AI engine
+
         result = analyze_candidate(
             temp_resume_path,
             job_description
         )
 
-        return result
+        return normalize_analysis_result(result)
+
+    # --------------------------------------------------
+    # Internal Error Handling
+    # --------------------------------------------------
 
     except Exception as e:
+
         # Log actual error on the server
         print(f"Analysis error: {e}")
 
-        # Return clean error to API client
+        # Return standardized error to client
         raise HTTPException(
             status_code=500,
-            detail="An error occurred while analyzing the candidate."
+            detail=error_response(
+                "ANALYSIS_ERROR",
+                "An error occurred while analyzing the candidate."
+            )
         )
 
+    # --------------------------------------------------
+    # Cleanup Temporary File
+    # --------------------------------------------------
+
     finally:
-        # Always delete temporary file
+
         if os.path.exists(temp_resume_path):
             os.remove(temp_resume_path)
