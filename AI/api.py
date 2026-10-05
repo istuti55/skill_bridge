@@ -16,6 +16,23 @@ MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB
 ALLOWED_EXTENSIONS = {".pdf", ".docx"}
 
 
+def is_valid_file_content(extension, file_data):
+    """
+    Validate the actual file signature.
+
+    PDF files should start with %PDF.
+    DOCX files are ZIP-based Office documents and start with PK.
+    """
+
+    if extension == ".pdf":
+        return file_data.startswith(b"%PDF")
+
+    if extension == ".docx":
+        return file_data.startswith(b"PK")
+
+    return False
+
+
 @app.get("/")
 def root():
     return {
@@ -73,6 +90,13 @@ async def analyze(
         raise HTTPException(
             status_code=400,
             detail="Resume file is too large. Maximum size is 5 MB."
+        )
+
+    # Validate actual file content
+    if not is_valid_file_content(extension, resume_data):
+        raise HTTPException(
+            status_code=400,
+            detail="File content does not match the selected file type."
         )
 
     # Create temporary file
