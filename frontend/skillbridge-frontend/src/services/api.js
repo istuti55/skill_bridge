@@ -22,8 +22,11 @@ export const getUserRole = () => getStoredUser()?.role || null;
 export const isAuthenticated = () => !!getAccessToken();
 
 // Where each role lands after login
-export const getHomeRoute = (role) =>
-  role === "company" ? "/company" : "/dashboard";
+export const getHomeRoute = (role) => {
+  if (role === "admin") return "/admin";
+  if (role === "company") return "/company";
+  return "/dashboard";
+};
 
 const clearSession = () => {
   localStorage.removeItem(ACCESS_KEY);
@@ -406,3 +409,49 @@ export const markNotificationRead = async (
       method: "PATCH",
     }
   );
+
+
+// ==================== ADMIN ====================
+
+// Overview numbers: users, companies, jobs, applications
+export const getAdminStats = async () =>
+  request("/admin/stats/");
+
+// All users. Optional filters: { role: "candidate" | "company" | "admin", q: "search text" }
+export const getAdminUsers = async ({ role, q } = {}) => {
+  const params = new URLSearchParams();
+  if (role) params.set("role", role);
+  if (q) params.set("q", q);
+  const query = params.toString();
+  return request(`/admin/users/${query ? `?${query}` : ""}`);
+};
+
+// All companies (pending and approved)
+export const getAdminCompanies = async () =>
+  request("/companies/");
+
+// All jobs (the backend returns every job for admins)
+export const getAdminJobs = async () =>
+  request("/jobs/");
+
+// Approve or reject a job. status: "approved" | "rejected"
+// Approving triggers bulk candidate matching; response includes candidates_matched.
+export const reviewJob = async (jobId, status) =>
+  request(`/jobs/${jobId}/approve/`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  });
+
+// Approve or remove approval for a company. approved: true | false
+export const setCompanyApproved = async (companyId, approved) =>
+  request(`/companies/${companyId}/approve/`, {
+    method: "PATCH",
+    body: JSON.stringify({ approved }),
+  });
+
+// Activate or deactivate a user account. isActive: true | false
+export const setUserActive = async (userId, isActive) =>
+  request(`/admin/users/${userId}/`, {
+    method: "PATCH",
+    body: JSON.stringify({ is_active: isActive }),
+  });

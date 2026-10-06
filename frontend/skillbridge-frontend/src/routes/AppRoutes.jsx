@@ -1,4 +1,4 @@
-﻿import { Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 
 import Home from "../pages/Home/Home";
 import Login from "../pages/Login/Login";
@@ -13,6 +13,8 @@ import Jobs from "../pages/Jobs/Jobs";
 import Interviews from "../pages/Interviews/Interviews";
 import Profile from "../pages/Profile/Profile";
 import Applications from "../pages/Applications/Applications";
+import AdminDashboard from "../pages/Admin/AdminDashboard";
+import ProtectedRoute from "./ProtectedRoute";
 
 function AppRoutes() {
   return (
@@ -35,6 +37,11 @@ function AppRoutes() {
       <Route path="/applications" element={<Applications />} />
       <Route path="/interviews" element={<Interviews />} />
       <Route path="/profile" element={<Profile />} />
+
+      {/* Admin (admin accounts only) */}
+      <Route element={<ProtectedRoute role="admin" />}>
+        <Route path="/admin" element={<AdminDashboard />} />
+      </Route>
     </Routes>
   );
 }
