@@ -1,28 +1,17 @@
-import { NavLink, useNavigate } from "react-router-dom";
+﻿import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
   FileText,
   Brain,
   Briefcase,
+  ClipboardList,
   CalendarDays,
   User,
   LogOut,
   X,
 } from "lucide-react";
-import toast from "react-hot-toast";
-
-import { logoutUser } from "../../../services/api";
 
 function Sidebar({ isOpen, setIsOpen }) {
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logoutUser(); // clears access token, refresh token and user
-    setIsOpen(false);
-    toast.success("Logged out");
-    navigate("/login", { replace: true });
-  };
-
   const menu = [
     {
       icon: <LayoutDashboard size={20} />,
@@ -43,6 +32,11 @@ function Sidebar({ isOpen, setIsOpen }) {
       icon: <Briefcase size={20} />,
       title: "Jobs",
       path: "/jobs",
+    },
+    {
+      icon: <ClipboardList size={20} />,
+      title: "Applications",
+      path: "/applications",
     },
     {
       icon: <CalendarDays size={20} />,
@@ -171,7 +165,6 @@ function Sidebar({ isOpen, setIsOpen }) {
         <div className="p-4 border-t border-gray-100">
           <button
             type="button"
-            onClick={handleLogout}
             className="
               w-full
               flex

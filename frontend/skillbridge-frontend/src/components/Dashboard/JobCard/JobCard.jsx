@@ -1,124 +1,91 @@
-﻿function JobCard({
-  job,
+
+import { MapPin, DollarSign, Briefcase, CheckCircle } from "lucide-react";
+
+function JobCard({
+  company,
+  title,
+  location,
+  salary,
+  type,
+  match,
+  description,
+  requiredSkills,
+  jobId,
+  isApplied = false,
   onApply,
-  onViewDetails,
   applying = false,
 }) {
-  const {
-    id,
-    title,
-    description,
-    required_skills = [],
-    location,
-    salary_range,
-    job_type_display,
-    job_type,
-    match_score,
-    has_applied,
-  } = job;
-
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition hover:shadow-md">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+      <div className="flex justify-between items-start gap-4">
         <div>
-          <h3 className="text-xl font-semibold text-gray-800">
+          <h3 className="text-xl font-bold text-gray-800">
             {title}
           </h3>
 
-          {location && (
-            <p className="mt-1 text-sm text-gray-500">
-              📍 {location}
-            </p>
-          )}
+          <p className="text-gray-600 mt-1">
+            {company}
+          </p>
         </div>
 
-        {match_score !== null &&
-          match_score !== undefined && (
-            <div className="rounded-lg bg-blue-50 px-4 py-2 text-center">
-              <p className="text-xs text-gray-500">
-                Match
-              </p>
-
-              <p className="text-lg font-bold text-blue-600">
-                {match_score}%
-              </p>
-            </div>
-          )}
-      </div>
-
-      {/* Job information */}
-      <div className="mt-4 flex flex-wrap gap-2">
-        {job_type_display || job_type ? (
-          <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
-            {job_type_display || job_type}
-          </span>
-        ) : null}
-
-        {salary_range && (
-          <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
-            {salary_range}
+        {match !== null && match !== undefined && (
+          <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-semibold whitespace-nowrap">
+            {match}% Match
           </span>
         )}
       </div>
 
-      {/* Description */}
+      <div className="flex flex-wrap gap-4 mt-5 text-sm text-gray-600">
+        <div className="flex items-center gap-1">
+          <MapPin size={16} />
+          {location}
+        </div>
+
+        <div className="flex items-center gap-1">
+          <DollarSign size={16} />
+          {salary}
+        </div>
+
+        <div className="flex items-center gap-1">
+          <Briefcase size={16} />
+          {type}
+        </div>
+      </div>
+
       {description && (
-        <p className="mt-4 text-sm leading-6 text-gray-600">
+        <p className="text-gray-600 text-sm mt-5 line-clamp-3">
           {description}
         </p>
       )}
 
-      {/* Required skills */}
-      {required_skills.length > 0 && (
-        <div className="mt-5">
-          <p className="mb-2 text-sm font-medium text-gray-700">
-            Required Skills
-          </p>
-
-          <div className="flex flex-wrap gap-2">
-            {required_skills.map((skill, index) => (
-              <span
-                key={`${skill}-${index}`}
-                className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700"
-              >
-                {skill}
-              </span>
-            ))}
-          </div>
+      {requiredSkills?.length > 0 && (
+        <div className="flex flex-wrap gap-2 mt-4">
+          {requiredSkills.map((skill, index) => (
+            <span
+              key={index}
+              className="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full text-xs"
+            >
+              {skill}
+            </span>
+          ))}
         </div>
       )}
 
-      {/* Actions */}
-      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-        {onViewDetails && (
-          <button
-            type="button"
-            onClick={() => onViewDetails(id)}
-            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
-          >
-            View Details
-          </button>
-        )}
-
-        {has_applied ? (
-          <button
-            type="button"
-            disabled
-            className="rounded-lg bg-green-100 px-4 py-2 text-sm font-medium text-green-700"
-          >
+      <div className="mt-6">
+        {isApplied ? (
+          <div className="flex items-center gap-2 text-green-600 font-semibold">
+            <CheckCircle size={19} />
             Applied
-          </button>
-        ) : onApply ? (
+          </div>
+        ) : (
           <button
-            type="button"
-            onClick={() => onApply(id)}
+            onClick={() => onApply(jobId)}
             disabled={applying}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
             {applying ? "Applying..." : "Apply Now"}
           </button>
-        ) : null}
+        )}
       </div>
     </div>
   );
