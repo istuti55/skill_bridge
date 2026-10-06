@@ -1,11 +1,24 @@
+import os
+
 from ollama import Client
 
 
-DEFAULT_MODEL = "llama3.2:latest"
+DEFAULT_MODEL = os.getenv(
+    "OLLAMA_MODEL",
+    "llama3.2:latest"
+)
 
-OLLAMA_HOST = "http://127.0.0.1:11434"
+OLLAMA_HOST = os.getenv(
+    "OLLAMA_HOST",
+    "http://127.0.0.1:11434"
+)
 
-OLLAMA_TIMEOUT = 120.0
+OLLAMA_TIMEOUT = float(
+    os.getenv(
+        "OLLAMA_TIMEOUT",
+        "120.0"
+    )
+)
 
 
 client = Client(
