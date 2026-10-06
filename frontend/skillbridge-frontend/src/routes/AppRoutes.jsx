@@ -7,9 +7,11 @@ import Home from "../pages/Home/Home";
 import Login from "../pages/Login/Login";
 import Register from "../pages/Register/Register";
 import ForgotPassword from "../pages/ForgotPassword/ForgotPassword";
+
 import CareerDashboard from "../pages/CareerDashboard/CareerDashboard";
 import CompanyDashboard from "../pages/CompanyDashboard/CompanyDashboard";
-import AdminDashboard from "../pages/Admin/AdminDashboard";
+import CompanyJobs from "../pages/CompanyJobs/CompanyJobs";
+import CompanyApplicants from "../pages/CompanyApplicants/CompanyApplicants";
 
 import Resume from "../pages/Resume/Resume";
 import AIAnalysis from "../pages/AIAnalysis/AIAnalysis";
@@ -20,38 +22,86 @@ import Profile from "../pages/Profile/Profile";
 function AppRoutes() {
   return (
     <Routes>
-      {/* Public */}
-      <Route path="/" element={<Home />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
+      {/* ==================== PUBLIC ==================== */}
 
-      {/* Login / Register: redirect away if already logged in */}
+      <Route path="/" element={<Home />} />
+
+      <Route
+        path="/forgot-password"
+        element={<ForgotPassword />}
+      />
+
+      {/* ==================== LOGIN / REGISTER ==================== */}
+
       <Route element={<PublicOnlyRoute />}>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
       </Route>
 
-      {/* Candidate only */}
+      {/* ==================== CANDIDATE ONLY ==================== */}
+
       <Route element={<ProtectedRoute role="candidate" />}>
-        <Route path="/career" element={<CareerDashboard />} />
-        <Route path="/dashboard" element={<CareerDashboard />} />
-        <Route path="/resume" element={<Resume />} />
-        <Route path="/ai-analysis" element={<AIAnalysis />} />
-        <Route path="/jobs" element={<Jobs />} />
-        <Route path="/interviews" element={<Interviews />} />
-        <Route path="/profile" element={<Profile />} />
+        <Route
+          path="/career"
+          element={<CareerDashboard />}
+        />
+
+        <Route
+          path="/dashboard"
+          element={<CareerDashboard />}
+        />
+
+        <Route
+          path="/resume"
+          element={<Resume />}
+        />
+
+        <Route
+          path="/ai-analysis"
+          element={<AIAnalysis />}
+        />
+
+        <Route
+          path="/jobs"
+          element={<Jobs />}
+        />
+
+        <Route
+          path="/interviews"
+          element={<Interviews />}
+        />
+
+        <Route
+          path="/profile"
+          element={<Profile />}
+        />
       </Route>
 
-      {/* Company only (Person 2 adds their pages in this block) */}
+      {/* ==================== COMPANY ONLY ==================== */}
+
       <Route element={<ProtectedRoute role="company" />}>
-        <Route path="/company" element={<CompanyDashboard />} />
+        <Route
+          path="/company"
+          element={<CompanyDashboard />}
+        />
+
+        <Route
+          path="/company/jobs"
+          element={<CompanyJobs />}
+        />
+
+        <Route
+          path="/company/applicants"
+          element={<CompanyApplicants />}
+        />
       </Route>
 
-      {/* Admin only */}
-      <Route element={<ProtectedRoute role="admin" />}>
-        <Route path="/admin" element={<AdminDashboard />} />
-      </Route>
+      {/* ==================== FALLBACK ==================== */}
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route
+        path="*"
+        element={<Navigate to="/" replace />}
+      />
     </Routes>
   );
 }
