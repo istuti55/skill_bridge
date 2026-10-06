@@ -1,5 +1,7 @@
 ﻿
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import { logoutUser } from "../../../services/api";
+
 import {
   LayoutDashboard,
   FileText,
@@ -13,6 +15,14 @@ import {
 } from "lucide-react";
 
 function Sidebar({ isOpen, setIsOpen }) {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logoutUser();
+    setIsOpen(false);
+    navigate("/login", { replace: true });
+  };
+
   const menu = [
     {
       icon: <LayoutDashboard size={20} />,
@@ -166,6 +176,7 @@ function Sidebar({ isOpen, setIsOpen }) {
         <div className="p-4 border-t border-gray-100">
           <button
             type="button"
+            onClick={handleLogout}
             className="
               w-full
               flex
