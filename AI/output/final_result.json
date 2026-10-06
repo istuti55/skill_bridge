@@ -1,174 +1,183 @@
 {
     "candidate": {
         "personal": {
-            "name": "ALEX MORGAN",
-            "email": "alex.morgan@email.com",
-            "phone": "(555) 019-2834",
-            "location": "New York, NY"
+            "name": "YOUR FULL NAME",
+            "email": "your.email@example.com",
+            "phone": "+00 000 000 0000",
+            "location": "City, Country"
         },
-        "summary": "Results-driven Software Engineer with over 4 years of experience building scalable web applications and optimizing backend architectures. Proficient in Python, JavaScript, and cloud technologies, with a proven track record of improving system performance and leading tech initiatives.",
+        "summary": "",
         "skills": [
-            "Python",
-            "JavaScript (ES6+)",
-            "TypeScript",
-            "SQL",
-            "HTML5/CSS3",
-            "React",
-            "Node.js",
-            "Django",
-            "PostgreSQL",
-            "Docker",
-            "Git",
-            "AWS (S3, EC2, Lambda)",
-            "CI/CD pipelines",
-            "RESTful APIs"
+            "Programming Languages: Python, C, C++, Java, JavaScript, SQL",
+            "Web & Software: HTML/CSS, React, Node.js, REST APIs, Django/Flask",
+            "Systems & Hardware: Linux, Embedded Systems, Arduino, Raspberry Pi, Microcontrollers, Digital Logic",
+            "Networking: TCP/IP, Routing & Switching, DNS, DHCP, Network Security basics",
+            "Databases: MySQL, PostgreSQL, MongoDB",
+            "Tools: Git/GitHub, Docker, VS Code, Postman, Wireshark, Jira"
         ],
         "education": [
-            "Bachelor of Science in Computer Science — State University",
-            "GPA: 3.8 / 4.0"
+            {
+                "title": "Bachelor of Engineering in Computer Engineering",
+                "university": "University Name",
+                "location": "City, Country",
+                "year": "Year – Year",
+                "gpa": "GPA/Percentage: X.XX",
+                "relevant_coursework": "Data Structures & Algorithms, Operating Systems, Computer Networks, Database Systems, Computer Architecture, Embedded Systems, Software Engineering."
+            }
         ],
         "experience": [
             {
-                "title": "Software Engineer",
-                "company": "TechCorp Solutions",
-                "start_date": "June 2023",
-                "end_date": "Present",
-                "current": true,
-                "details": "Led the backend migration to microservices architecture, reducing server response latency by 25%. Developed and maintained high-traffic RESTful APIs serving over 500,000 active monthly users. Mentored junior developers and spearheaded code review practices, improving overall codebase quality score by 15%."
+                "title": "Job Title",
+                "company": "",
+                "start_date": "",
+                "end_date": "",
+                "current": false,
+                "details": "Developed and maintained [feature/system] using [technologies], improving [metric] by [X]%."
             },
             {
-                "title": "Junior Web Developer",
-                "company": "Apex Digital Agency",
-                "start_date": "August 2021",
-                "end_date": "May 2023",
+                "title": "Job Title",
+                "company": "",
+                "start_date": "",
+                "end_date": "",
                 "current": false,
-                "details": "Built responsive user interfaces using React and Tailwind CSS for 12+ client websites. Integrated third-party payment gateways (Stripe, PayPal), boosting checkout conversion rates by 10%. Collaborated with UX designers to ensure WCAG accessibility compliance across all web products."
+                "details": "Collaborated with a team of [N] engineers to design, test, and deploy [project/product]."
+            },
+            {
+                "title": "Intern / Junior Engineer",
+                "company": "",
+                "start_date": "",
+                "end_date": "",
+                "current": false,
+                "details": "Assisted in [task] and gained hands-on experience with [tools/technologies]."
             }
         ],
         "projects": [
             {
-                "title": "TaskFlow (Task Management App)",
-                "description": "Built a real-time productivity app using React, Node.js, and WebSockets. Hosted on AWS with automated CI/CD deployment via GitHub Actions."
+                "title": "Project Name",
+                "technologies": "Python, C++, MySQL",
+                "description": "Built [what it does] that [result/impact]. Link: github.com/yourname/project"
+            },
+            {
+                "title": "Final Year Project: Title",
+                "technologies": "Technologies Used",
+                "description": "Designed and implemented [system] to solve [problem]; supervised by [Supervisor Name]."
             }
         ],
         "certifications": []
     },
     "job": {
-        "job_title": "Python Backend Developer",
+        "job_title": "",
         "required_skills": [
-            "Python",
-            "FastAPI",
-            "SQL",
-            "Docker",
-            "Git"
+            "cs"
         ],
-        "preferred_skills": [
-            "AWS"
-        ],
-        "minimum_experience": 2,
-        "education": [
-            "Bachelor of Engineering in Computer Engineering"
-        ],
-        "responsibilities": [
-            "Develop backend APIs",
-            "Design database systems",
-            "Build scalable applications"
-        ]
+        "preferred_skills": [],
+        "minimum_experience": 0,
+        "education": [],
+        "responsibilities": []
     },
     "credibility": {
         "status": "Manual verification recommended.",
         "timeline_issues": [],
-        "strong_evidence": [
-            "JavaScript (ES6+)",
-            "TypeScript",
-            "HTML5/CSS3",
-            "React",
-            "Node.js",
-            "Git",
-            "AWS (S3, EC2, Lambda)",
-            "CI/CD pipelines",
-            "RESTful APIs"
-        ],
+        "strong_evidence": [],
         "weak_evidence": [],
         "unsupported_skills": [
-            "Python",
-            "SQL",
-            "Django",
-            "PostgreSQL",
-            "Docker"
+            "Programming Languages: Python, C, C++, Java, JavaScript, SQL",
+            "Web & Software: HTML/CSS, React, Node.js, REST APIs, Django/Flask",
+            "Systems & Hardware: Linux, Embedded Systems, Arduino, Raspberry Pi, Microcontrollers, Digital Logic",
+            "Networking: TCP/IP, Routing & Switching, DNS, DHCP, Network Security basics",
+            "Databases: MySQL, PostgreSQL, MongoDB",
+            "Tools: Git/GitHub, Docker, VS Code, Postman, Wireshark, Jira"
         ],
         "duplicate_skills": [],
         "verification_required": true
     },
     "matching": {
-        "overall_score": 87.0,
-        "skills_score": 84.0,
+        "overall_score": 30.0,
+        "skills_score": 0.0,
         "experience_score": 100.0,
-        "education_score": 82.0,
-        "matched_skills": [
-            "aws",
-            "docker",
-            "git",
-            "python",
-            "sql"
-        ],
+        "education_score": 100.0,
+        "matched_skills": [],
         "missing_skills": [
-            "fastapi"
+            "cs"
         ],
-        "recommendation": "Strong Match"
+        "recommendation": "Weak Match",
+        "explanation": {
+            "summary": "Weak Match with an overall score of 30.0%. Several job requirements are not sufficiently satisfied.",
+            "skill_reason": "Skill score: 0.0%. The skill score is based on required skill coverage.",
+            "matched_skill_reason": "No required or preferred skills were matched.",
+            "missing_skill_reason": "Missing skills: cs.",
+            "experience_reason": "Experience score: 100.0%. No minimum experience requirement was provided, so the experience requirement is considered satisfied.",
+            "education_reason": "Education score: 100.0%. No education requirement was provided, so the education requirement is considered satisfied."
+        }
     },
     "skill_gap": {
         "required": {
-            "matched_skills": [
-                "docker",
-                "git",
-                "python",
-                "sql"
-            ],
+            "matched_skills": [],
             "missing_skills": [
-                "fastapi"
+                "cs"
             ],
-            "skill_gap_percentage": 20.0
+            "skill_gap_percentage": 100.0,
+            "explanation": {
+                "summary": "The candidate is missing 1 of 1 required skills.",
+                "matched_reason": "No required skills were matched.",
+                "missing_reason": "Missing required skills: cs."
+            }
         },
         "preferred": {
-            "matched_skills": [
-                "aws"
-            ],
+            "matched_skills": [],
             "missing_skills": [],
-            "skill_gap_percentage": 0.0
+            "skill_gap_percentage": 0.0,
+            "explanation": {
+                "summary": "No preferred skills were provided for this job.",
+                "matched_reason": "No preferred skills were matched.",
+                "missing_reason": "No preferred skills are missing."
+            }
         },
         "learning_priorities": [
             {
-                "skill": "fastapi",
+                "skill": "cs",
                 "priority": "high",
+                "status": "missing",
                 "reason": "Required skill missing from candidate profile."
             }
         ]
     },
     "career_recommendation": {
         "recommended_roles": [
-            "Backend Developer",
-            "Frontend Developer",
-            "Full Stack Developer"
+            "Frontend Developer"
         ],
         "skill_priorities": [
-            "fastapi"
+            "cs"
         ],
         "learning_path": [
             {
-                "skill": "fastapi",
+                "skill": "cs",
                 "priority": "high",
                 "topics": [
-                    "Introduction to FastAPI",
-                    "Setting up FastAPI Project",
-                    "Defining Routes and Endpoints",
-                    "Handling Requests and Responses",
-                    "Error Handling and Debugging",
-                    "Integration with Databases (e.g. PostgreSQL)",
-                    "Deployment and Testing using Docker and CI/CD pipelines"
+                    "Discrete Math",
+                    "Set Theory",
+                    "Propositional and Predicate Logic",
+                    "Number Systems"
                 ]
             }
         ],
-        "reason": "Candidate is best aligned with Backend Developer, Frontend Developer, Full Stack Developer based on their current skills and experience. Current skills include aws, ci/cd pipelines, django, docker, git, html5/css3, javascript, node.js, postgresql, python, react, rest api, sql, typescript. The main required skill gap is fastapi."
+        "reason": "Candidate is best aligned with Frontend Developer based on their current skills and experience. Current skills include databases: mysql, postgresql, mongodb, networking: tcp/ip, routing & switching, dns, dhcp, network security basics, programming languages: python, c, c++, java, javascript, sql, systems & hardware: linux, embedded systems, arduino, raspberry pi, microcontrollers, digital logic, tools: git/github, docker, vs code, postman, wireshark, jira, web & software: html/css, react, node.js, rest apis, django/flask. Frontend Developer (4.35%) is supported by experience/project evidence: ui. The main required skill gap is cs.",
+        "explanation": {
+            "summary": "The recommendation is based on the candidate's verified skills, role evidence, and identified skill gaps. Recommended roles: Frontend Developer.",
+            "role_reasons": [
+                {
+                    "role": "Frontend Developer",
+                    "score": 4.35,
+                    "core_skills": [],
+                    "supporting_skills": [],
+                    "evidence": [
+                        "ui"
+                    ],
+                    "reason": "Frontend Developer scored 4.35% based on experience/project evidence: ui."
+                }
+            ],
+            "skill_reason": "The main required skill gap is cs.",
+            "learning_reason": "The learning direction focuses on cs (high priority)."
+        }
     }
 }
