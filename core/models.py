@@ -69,11 +69,21 @@ class Job(models.Model):
         ('rejected', 'Rejected'),
         ('closed', 'Closed'),
     ]
+    JOB_TYPE_CHOICES = [
+        ('full_time', 'Full-time'),
+        ('part_time', 'Part-time'),
+        ('internship', 'Internship'),
+        ('contract', 'Contract'),
+        ('remote', 'Remote'),
+    ]
 
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='jobs')
     title = models.CharField(max_length=200)
     description = models.TextField(null=True, blank=True)
     required_skills = models.JSONField(default=list)
+    location = models.CharField(max_length=150, blank=True, default='')
+    salary_range = models.CharField(max_length=100, blank=True, default='')
+    job_type = models.CharField(max_length=20, choices=JOB_TYPE_CHOICES, default='full_time')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     posted_date = models.DateTimeField(auto_now_add=True)
 

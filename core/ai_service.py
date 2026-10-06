@@ -1,10 +1,12 @@
 import json
 
 import requests
+from django.conf import settings
 
-OLLAMA_URL = "http://localhost:11434/api/generate"
-OLLAMA_MODEL = "llama3"
-OLLAMA_TIMEOUT = 120  # seconds
+# Configured in .env (see settings.py): OLLAMA_URL, OLLAMA_MODEL, OLLAMA_TIMEOUT
+OLLAMA_URL = getattr(settings, 'OLLAMA_URL', "http://localhost:11434/api/generate")
+OLLAMA_MODEL = getattr(settings, 'OLLAMA_MODEL', "llama3.2:latest")
+OLLAMA_TIMEOUT = getattr(settings, 'OLLAMA_TIMEOUT', 120)  # seconds
 
 
 class AIServiceError(Exception):
@@ -63,14 +65,6 @@ Resume text:
         raise AIServiceError("Could not parse the AI response.")
 
     return data
-import json
-
-import requests
-from django.conf import settings
-
-OLLAMA_URL = getattr(settings, 'OLLAMA_URL', "http://localhost:11434/api/generate")
-OLLAMA_MODEL = getattr(settings, 'OLLAMA_MODEL', "llama3")
-OLLAMA_TIMEOUT = 120  # seconds
 def generate_gap_narrative(job_title, strong, weak, missing):
     """Short friendly summary of a skill gap report. Raises AIServiceError if AI is down."""
     prompt = f"""

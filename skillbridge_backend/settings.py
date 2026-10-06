@@ -138,10 +138,11 @@ SIMPLE_JWT = {
 # CORS_ORIGINS=http://localhost:5173,https://skillbridge.vercel.app
 CORS_ALLOWED_ORIGINS = config(
     'CORS_ORIGINS',
-    default='http://localhost:3000,http://localhost:5173',
+    default='http://localhost:3000,http://localhost:5173,http://localhost:5174,http://127.0.0.1:3000,http://127.0.0.1:5173,http://127.0.0.1:5174',
     cast=Csv(),
 )
 
 # Ollama (local AI): one place to configure it
 OLLAMA_URL = config('OLLAMA_URL', default='http://localhost:11434/api/generate')
-OLLAMA_MODEL = config('OLLAMA_MODEL', default='llama3')
+OLLAMA_MODEL = config('OLLAMA_MODEL', default='llama3.2:latest')
+OLLAMA_TIMEOUT = config('OLLAMA_TIMEOUT', default=120, cast=int)
