@@ -1,5 +1,8 @@
+import json
 import os
+import sys
 import uuid
+from datetime import datetime
 
 import pymupdf as fitz  # PyMuPDF
 from django.conf import settings
@@ -11,9 +14,18 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
+AI_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    'AI'
+)
+
+if AI_DIR not in sys.path:
+    sys.path.insert(0, AI_DIR)
+
 from .models import User, Candidate, Job, Application, SkillGap, Notification, JobMatch
 from .serializers import UserRegisterSerializer, UserSerializer, JobSerializer, ApplicationSerializer
-from .ai_service import extract_cv_data, generate_gap_narrative, AIServiceError
+from .ai_service import generate_gap_narrative, AIServiceError
+from parsing.resume_parser import parse_resume
 from .ai_bridge import get_skill_gap, get_career_recommendation
 from .analysis import gap_summary
 from .matching_service import evaluate, run_bulk_match, match_candidate_to_live_jobs, _names
@@ -66,6 +78,50 @@ class LoginView(APIView):
 
 # ---------------- Candidate: CV and profile ----------------
 
+def calculate_experience_years(experience_entries):
+    """Calculate total experience in years from parsed resume experience entries."""
+    total_months = 0
+
+    for entry in experience_entries:
+        if not isinstance(entry, dict):
+            continue
+
+        start = str(entry.get('start_date', '')).strip()
+        end = str(entry.get('end_date', '')).strip()
+
+        if not start:
+            continue
+
+        try:
+            start_date = datetime.strptime(start, '%B %Y')
+        except ValueError:
+            try:
+                start_date = datetime.strptime(start, '%b %Y')
+            except ValueError:
+                continue
+
+        if not end or end.lower() == 'present':
+            end_date = datetime.now()
+        else:
+            try:
+                end_date = datetime.strptime(end, '%B %Y')
+            except ValueError:
+                try:
+                    end_date = datetime.strptime(end, '%b %Y')
+                except ValueError:
+                    continue
+
+        months = (
+            (end_date.year - start_date.year) * 12
+            + (end_date.month - start_date.month)
+        )
+
+        if months > 0:
+            total_months += months
+
+    return round(total_months / 12, 1)
+
+
 class CVUploadView(APIView):
     permission_classes = [IsCandidate]
     parser_classes = [MultiPartParser, FormParser]
@@ -112,17 +168,20 @@ class CVUploadView(APIView):
             )
 
         try:
-            ai_result = extract_cv_data(resume_text)
-        except AIServiceError as e:
+            parsed_resume = parse_resume(full_path)
+            ai_result = json.loads(parsed_resume)
+        except Exception:
             os.remove(full_path)
-            return Response({'error': str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            return Response(
+                {'error': 'Could not parse this CV with the AI resume parser'},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
 
         skills = ai_result.get('skills', [])
         education = ai_result.get('education', [])
-        try:
-            experience = float(ai_result.get('experience_years', 0))
-        except (TypeError, ValueError):
-            experience = 0
+        experience_entries = ai_result.get('experience', [])
+
+        experience = calculate_experience_years(experience_entries)
 
         skills = skills if isinstance(skills, list) else []
         education = education if isinstance(education, list) else []
