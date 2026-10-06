@@ -6,3 +6,10 @@ db.sqlite3
 .env
 media/
 node_modules/
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+.env

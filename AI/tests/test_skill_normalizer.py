@@ -1,30 +1,78 @@
 from matching.skill_normalizer import normalize_skill, normalize_skills
 
 
-print("===== SKILL NORMALIZER TEST =====")
+def test_normalize_skill():
 
-test_skills = [
-    "Python",
-    "PYTHON",
-    "AWS (S3, EC2, Lambda)",
-    "Fast API",
-    "FastAPI",
-    "JavaScript (ES6+)",
-    "JS",
-    "Postgres",
-    "RESTful APIs",
-    "Docker",
-    "Git"
-]
+    test_cases = [
+        (" Python ", "python"),
+        ("PYTHON", "python"),
+        ("python", "python"),
 
-print("\nIndividual normalization:")
+        ("Fast API", "fastapi"),
+        ("Fast-API", "fastapi"),
+        ("fast_api", "fastapi"),
 
-for skill in test_skills:
-    print(f"{skill} -> {normalize_skill(skill)}")
+        ("JavaScript", "javascript"),
+        ("JS", "javascript"),
+        ("JavaScript (ES6+)", "javascript"),
+
+        ("TypeScript", "typescript"),
+        ("TS", "typescript"),
+
+        ("Postgres", "postgresql"),
+        ("Postgres DB", "postgresql"),
+
+        ("AWS Cloud", "aws"),
+
+        ("RESTful API", "rest api"),
+        ("RESTful APIs", "rest api"),
+        ("REST API", "rest api"),
+
+        ("", ""),
+        ("   ", ""),
+        (None, ""),
+    ]
+
+    for input_skill, expected in test_cases:
+
+        result = normalize_skill(input_skill)
+
+        print(
+            f"{input_skill!r} -> {result!r}"
+        )
+
+        assert result == expected
 
 
-print("\nList normalization:")
+def test_normalize_skills():
 
-result = normalize_skills(test_skills)
+    skills = [
+        "Python",
+        "python",
+        "PYTHON",
+        "Fast API",
+        "fastapi",
+        "JavaScript",
+        "JS",
+        "",
+        None,
+    ]
 
-print(result)
+    result = normalize_skills(skills)
+
+    print("\nNormalized skills:")
+    print(result)
+
+    assert result == [
+        "python",
+        "fastapi",
+        "javascript"
+    ]
+
+
+if __name__ == "__main__":
+
+    test_normalize_skill()
+    test_normalize_skills()
+
+    print("\n✓ Skill normalization tests passed")
