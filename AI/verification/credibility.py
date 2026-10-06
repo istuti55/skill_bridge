@@ -1,95 +1,147 @@
 import re
+from datetime import datetime
 
 from matching.skill_normalizer import normalize_skill
+
+
+def keyword_in_text(keyword: str, text: str) -> bool:
+    if not keyword or not text:
+        return False
+    pattern = r"(?<!\w)" + re.escape(keyword.lower()) + r"(?!\w)"
+    return bool(re.search(pattern, text.lower()))
+
+
+def _parse_job_dates(item):
+    current_dt = datetime.now()
+    current_year = current_dt.year
+    current_month = current_dt.month
+    current_total_months = current_year * 12 + current_month
+
+    def parse_year_month(text):
+        if not text:
+            return None, None
+        y_match = re.search(r"\b(19\d{2}|20\d{2})\b", text)
+        if not y_match:
+            return None, None
+        y = int(y_match.group(1))
+
+        m_pattern = (
+            r"January|February|March|April|May|June|"
+            r"July|August|September|October|November|December|"
+            r"Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec"
+        )
+        m_match = re.search(m_pattern, text, re.IGNORECASE)
+        m = None
+        if m_match:
+            m_str = m_match.group(0)[:3].capitalize()
+            months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+            if m_str in months:
+                m = months.index(m_str) + 1
+        return y, m
+
+    if isinstance(item, dict):
+        start_raw = str(item.get("start_date", "")).strip()
+        end_raw = str(item.get("end_date", "")).strip()
+        is_current = bool(item.get("current", False)) or end_raw.lower() in ["present", "current", "now", "ongoing"]
+
+        start_year, start_month = parse_year_month(start_raw)
+        if not start_year:
+            text = f"{start_raw} {end_raw} {item.get('title', '')} {item.get('company', '')} {item.get('details', '')}"
+            years = [int(y) for y in re.findall(r"\b(19\d{2}|20\d{2})\b", text)]
+            if len(years) >= 1:
+                start_year = min(years)
+                start_month = 1
+
+        if not start_year:
+            return None, None, False
+
+        start_month = start_month or 1
+        start_val = start_year * 12 + start_month
+
+        if is_current:
+            end_val = current_total_months
+        else:
+            end_year, end_month = parse_year_month(end_raw)
+            if not end_year:
+                years = [int(y) for y in re.findall(r"\b(19\d{2}|20\d{2})\b", f"{start_raw} {end_raw}")]
+                if len(years) >= 2:
+                    end_year = max(years)
+                    end_month = 12
+                else:
+                    end_year = start_year
+                    end_month = 12
+            else:
+                end_month = end_month or 12
+            end_val = end_year * 12 + end_month
+
+        return start_val, end_val, is_current
+
+    else:
+        text = str(item)
+        is_current = bool(re.search(r"\b(present|current|now|ongoing)\b", text, re.IGNORECASE))
+        years = [int(y) for y in re.findall(r"\b(19\d{2}|20\d{2})\b", text)]
+
+        if not years:
+            return None, None, False
+
+        start_year = min(years)
+        start_val = start_year * 12 + 1
+
+        if is_current:
+            end_val = current_total_months
+        elif len(years) >= 2:
+            end_year = max(years)
+            end_val = end_year * 12 + 12
+        else:
+            end_val = start_year * 12 + 12
+
+        return start_val, end_val, is_current
 
 
 def check_timeline(experience):
     """
     Detect potentially overlapping employment periods.
-
-    The function looks for years inside each experience entry
-    and compares the inferred employment ranges.
+    Uses start_date, end_date, and current from each job.
+    Back-to-back jobs are not flagged; real overlaps and current jobs are.
     """
+    jobs = []
+    for item in experience:
+        start_val, end_val, is_current = _parse_job_dates(item)
+        if start_val is not None and end_val is not None:
+            jobs.append({
+                "start": start_val,
+                "end": end_val,
+                "current": is_current
+            })
 
-    issues = []
+    overlap_found = False
+    for i in range(len(jobs)):
+        for j in range(i + 1, len(jobs)):
+            j1, j2 = jobs[i], jobs[j]
+            # Strict overlap check: start1 < end2 and start2 < end1
+            if j1["start"] < j2["end"] and j2["start"] < j1["end"]:
+                overlap_found = True
+                break
+        if overlap_found:
+            break
 
-    for i, current in enumerate(experience):
-
-        for j, other in enumerate(experience):
-
-            if i >= j:
-                continue
-
-            current_text = str(current).lower()
-            other_text = str(other).lower()
-
-            current_years = [
-                int(year)
-                for year in re.findall(
-                    r"\b(19\d{2}|20\d{2})\b",
-                    current_text
-                )
-            ]
-
-            other_years = [
-                int(year)
-                for year in re.findall(
-                    r"\b(19\d{2}|20\d{2})\b",
-                    other_text
-                )
-            ]
-
-            if len(current_years) >= 2 and len(other_years) >= 2:
-
-                current_start = min(current_years)
-                current_end = max(current_years)
-
-                other_start = min(other_years)
-                other_end = max(other_years)
-
-                overlap = (
-                    current_start <= other_end
-                    and other_start <= current_end
-                )
-
-                if overlap:
-                    issues.append(
-                        "Potentially overlapping employment periods detected."
-                    )
-
-    return issues
+    if overlap_found:
+        return ["Potentially overlapping employment periods detected."]
+    return []
 
 
 def check_skill_consistency(skills, experience, projects):
     """
     Evaluate how strongly each listed skill is supported
     by experience and project evidence.
-
-    Evidence levels:
-
-    Strong evidence:
-        The skill or a direct technical variation appears
-        in experience or project evidence.
-
-    Weak evidence:
-        A related concept appears in experience or projects,
-        but the exact skill is not directly demonstrated.
-
-    Unsupported:
-        The skill is claimed but no supporting evidence
-        is found in experience or projects.
-
-    Important:
-        The candidate's skills list itself is NOT considered
-        evidence. This prevents a candidate from verifying
-        a skill simply by listing it.
+    Uses whole-word matching.
     """
 
     evidence_text = (
         " ".join(map(str, experience))
         + " "
         + " ".join(map(str, projects))
-    ).lower()
+    )
 
     strong_evidence = []
     weak_evidence = []
@@ -100,131 +152,54 @@ def check_skill_consistency(skills, experience, projects):
     # ==========================================================
 
     evidence_aliases = {
-
         "python": {
-            "strong": [
-                "python"
-            ],
-            "weak": [
-                "python scripting",
-                "python development"
-            ]
+            "strong": ["python"],
+            "weak": ["python scripting", "python development"]
         },
-
         "javascript": {
-            "strong": [
-                "javascript",
-                "js"
-            ],
-            "weak": [
-                "frontend development",
-                "web development"
-            ]
+            "strong": ["javascript", "js"],
+            "weak": ["frontend development", "web development"]
         },
-
         "typescript": {
-            "strong": [
-                "typescript",
-                "ts"
-            ],
+            "strong": ["typescript", "ts"],
             "weak": []
         },
-
         "sql": {
-            "strong": [
-                "sql"
-            ],
-            "weak": [
-                "database",
-                "databases"
-            ]
+            "strong": ["sql"],
+            "weak": ["database", "databases"]
         },
-
         "html5/css3": {
-            "strong": [
-                "html",
-                "html5",
-                "css",
-                "css3"
-            ],
-            "weak": [
-                "frontend",
-                "web development"
-            ]
+            "strong": ["html", "html5", "css", "css3"],
+            "weak": ["frontend", "web development"]
         },
-
         "react": {
-            "strong": [
-                "react",
-                "reactjs",
-                "react.js"
-            ],
+            "strong": ["react", "reactjs", "react.js"],
             "weak": []
         },
-
         "node.js": {
-            "strong": [
-                "node.js",
-                "nodejs",
-                "node"
-            ],
+            "strong": ["node.js", "nodejs", "node"],
             "weak": []
         },
-
         "django": {
-            "strong": [
-                "django"
-            ],
-            "weak": [
-                "python web framework"
-            ]
+            "strong": ["django"],
+            "weak": ["python web framework"]
         },
-
         "postgresql": {
-            "strong": [
-                "postgresql",
-                "postgres",
-                "postgres db"
-            ],
-            "weak": [
-                "database",
-                "databases"
-            ]
+            "strong": ["postgresql", "postgres", "postgres db"],
+            "weak": ["database", "databases"]
         },
-
         "docker": {
-            "strong": [
-                "docker"
-            ],
-            "weak": [
-                "container",
-                "containers",
-                "containerized"
-            ]
+            "strong": ["docker"],
+            "weak": ["container", "containers", "containerized"]
         },
-
         "git": {
-            "strong": [
-                "git",
-                "github"
-            ],
-            "weak": [
-                "version control"
-            ]
+            "strong": ["git", "github"],
+            "weak": ["version control"]
         },
-
         "aws": {
-            "strong": [
-                "aws",
-                "amazon web services"
-            ],
-            "weak": [
-                "cloud",
-                "cloud hosting",
-                "cloud deployment"
-            ]
+            "strong": ["aws", "amazon web services"],
+            "weak": ["cloud", "cloud hosting", "cloud deployment"]
         },
-
         "ci/cd pipelines": {
             "strong": [
                 "ci/cd",
@@ -238,7 +213,6 @@ def check_skill_consistency(skills, experience, projects):
                 "deployment pipeline"
             ]
         },
-
         "rest api": {
             "strong": [
                 "rest api",
@@ -253,12 +227,7 @@ def check_skill_consistency(skills, experience, projects):
         }
     }
 
-    # ==========================================================
-    # CHECK EACH SKILL
-    # ==========================================================
-
     for skill in skills:
-
         normalized_skill = normalize_skill(skill)
 
         if not normalized_skill:
@@ -275,31 +244,13 @@ def check_skill_consistency(skills, experience, projects):
         strong_keywords = evidence["strong"]
         weak_keywords = evidence["weak"]
 
-        # ======================================================
-        # STRONG EVIDENCE
-        # ======================================================
-
-        if any(
-            keyword.lower() in evidence_text
-            for keyword in strong_keywords
-        ):
+        if any(keyword_in_text(kw, evidence_text) for kw in strong_keywords):
             strong_evidence.append(skill)
             continue
 
-        # ======================================================
-        # WEAK EVIDENCE
-        # ======================================================
-
-        if any(
-            keyword.lower() in evidence_text
-            for keyword in weak_keywords
-        ):
+        if any(keyword_in_text(kw, evidence_text) for kw in weak_keywords):
             weak_evidence.append(skill)
             continue
-
-        # ======================================================
-        # NO EVIDENCE
-        # ======================================================
 
         unsupported_skills.append(skill)
 
@@ -312,136 +263,61 @@ def check_skill_consistency(skills, experience, projects):
 
 def check_keyword_stuffing(skills):
     """
-    Detect duplicate skill entries.
-
-    Matching is case-insensitive.
+    Detect duplicate skill entries after normalization.
     """
+    if not skills:
+        return []
 
-    normalized = [
-        skill.lower().strip()
-        for skill in skills
-        if skill
-    ]
+    normalized = []
+    for skill in skills:
+        if not skill:
+            continue
+        norm = normalize_skill(str(skill))
+        if norm:
+            normalized.append(norm)
 
-    duplicates = []
+    duplicates = set()
+    seen = set()
+    for norm in normalized:
+        if norm in seen:
+            duplicates.add(norm)
+        else:
+            seen.add(norm)
 
-    for skill in set(normalized):
-
-        if normalized.count(skill) > 1:
-            duplicates.append(skill)
-
-    return sorted(duplicates)
+    return sorted(list(duplicates))
 
 
 def check_credibility(candidate):
     """
     Generate a complete credibility report.
-
-    Checks:
-
-    1. Employment timeline
-    2. Skill evidence
-    3. Duplicate skills
-
-    Returns a structured credibility report.
     """
+    experience = candidate.get("experience", [])
+    skills = candidate.get("skills", [])
+    projects = candidate.get("projects", [])
 
-    experience = candidate.get(
-        "experience",
-        []
-    )
+    timeline_issues = check_timeline(experience)
+    skill_evidence = check_skill_consistency(skills, experience, projects)
 
-    skills = candidate.get(
-        "skills",
-        []
-    )
+    strong_evidence = skill_evidence["strong_evidence"]
+    weak_evidence = skill_evidence["weak_evidence"]
+    unsupported_skills = skill_evidence["unsupported_skills"]
 
-    projects = candidate.get(
-        "projects",
-        []
-    )
-
-    # ==========================================================
-    # 1. TIMELINE CHECK
-    # ==========================================================
-
-    timeline_issues = check_timeline(
-        experience
-    )
-
-    # ==========================================================
-    # 2. SKILL CONSISTENCY CHECK
-    # ==========================================================
-
-    skill_evidence = check_skill_consistency(
-        skills,
-        experience,
-        projects
-    )
-
-    strong_evidence = skill_evidence[
-        "strong_evidence"
-    ]
-
-    weak_evidence = skill_evidence[
-        "weak_evidence"
-    ]
-
-    unsupported_skills = skill_evidence[
-        "unsupported_skills"
-    ]
-
-    # ==========================================================
-    # 3. DUPLICATE SKILL CHECK
-    # ==========================================================
-
-    duplicate_skills = check_keyword_stuffing(
-        skills
-    )
-
-    # ==========================================================
-    # 4. COMBINE CREDIBILITY ISSUES
-    # ==========================================================
+    duplicate_skills = check_keyword_stuffing(skills)
 
     issues = []
-
     if timeline_issues:
-
-        issues.extend(
-            timeline_issues
-        )
+        issues.extend(timeline_issues)
 
     if unsupported_skills:
-
-        issues.append(
-            "Some listed skills have limited supporting evidence."
-        )
+        issues.append("Some listed skills have limited supporting evidence.")
 
     if duplicate_skills:
-
-        issues.append(
-            "Duplicate skill entries detected."
-        )
-
-    # ==========================================================
-    # 5. STATUS
-    # ==========================================================
+        issues.append("Duplicate skill entries detected.")
 
     if not issues:
-
-        status = (
-            "No major credibility signals detected."
-        )
-
+        status = "No major credibility signals detected."
     else:
-
-        status = (
-            "Manual verification recommended."
-        )
-
-    # ==========================================================
-    # 6. FINAL RESULT
-    # ==========================================================
+        status = "Manual verification recommended."
 
     return {
         "status": status,
