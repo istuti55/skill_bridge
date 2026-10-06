@@ -9,6 +9,7 @@ import Register from "../pages/Register/Register";
 import ForgotPassword from "../pages/ForgotPassword/ForgotPassword";
 import CareerDashboard from "../pages/CareerDashboard/CareerDashboard";
 import CompanyDashboard from "../pages/CompanyDashboard/CompanyDashboard";
+import AdminDashboard from "../pages/Admin/AdminDashboard";
 
 import Resume from "../pages/Resume/Resume";
 import AIAnalysis from "../pages/AIAnalysis/AIAnalysis";
@@ -43,6 +44,11 @@ function AppRoutes() {
       {/* Company only (Person 2 adds their pages in this block) */}
       <Route element={<ProtectedRoute role="company" />}>
         <Route path="/company" element={<CompanyDashboard />} />
+      </Route>
+
+      {/* Admin only */}
+      <Route element={<ProtectedRoute role="admin" />}>
+        <Route path="/admin" element={<AdminDashboard />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

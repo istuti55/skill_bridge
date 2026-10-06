@@ -22,8 +22,11 @@ export const getUserRole = () => getStoredUser()?.role || null;
 export const isAuthenticated = () => !!getAccessToken();
 
 // Where each role lands after login
-export const getHomeRoute = (role) =>
-  role === "company" ? "/company" : "/dashboard";
+export const getHomeRoute = (role) => {
+  if (role === "admin") return "/admin";
+  if (role === "company") return "/company";
+  return "/dashboard";
+};
 
 const clearSession = () => {
   localStorage.removeItem(ACCESS_KEY);
@@ -232,3 +235,39 @@ export const getNotifications = async () => request("/notifications/");
 // Backend route is PATCH (the old POST returned 405)
 export const markNotificationRead = async (notificationId) =>
   request(`/notifications/${notificationId}/read/`, { method: "PATCH" });
+
+// ==================== ADMIN ====================
+
+export const getAdminStats = async () => request("/admin/stats/");
+
+export const getAdminUsers = async ({ role, q } = {}) => {
+  const params = new URLSearchParams();
+  if (role) params.set("role", role);
+  if (q) params.set("q", q);
+  const query = params.toString();
+  return request(`/admin/users/${query ? `?${query}` : ""}`);
+};
+
+export const setUserActive = async (userId, isActive) =>
+  request(`/admin/users/${userId}/`, {
+    method: "PATCH",
+    body: JSON.stringify({ is_active: isActive }),
+  });
+
+// All jobs (the backend returns every job for admins)
+export const getAdminJobs = async () => request("/jobs/");
+
+// status: "approved" | "rejected"
+export const reviewJob = async (jobId, status) =>
+  request(`/jobs/${jobId}/approve/`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  });
+
+export const getAdminCompanies = async () => request("/companies/");
+
+export const setCompanyApproved = async (companyId, approved) =>
+  request(`/companies/${companyId}/approve/`, {
+    method: "PATCH",
+    body: JSON.stringify({ approved }),
+  });

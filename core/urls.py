@@ -11,6 +11,7 @@ from .extra_views import (
     CandidateDashboardView, CompanyDashboardView,
     CompareCandidatesView, ApplicantMatchView,
 )
+from .admin_views import AdminStatsView, AdminUserListView, AdminUserDetailView
 from .company_views import (
     CompanyProfileView, CompanyListView, CompanyApproveView,
     JobListCreateView, JobDetailView, JobCloseView,
@@ -47,6 +48,10 @@ urlpatterns = [
 
     path('dashboard/candidate/', CandidateDashboardView.as_view(), name='dashboard-candidate'),
     path('dashboard/company/', CompanyDashboardView.as_view(), name='dashboard-company'),
+
+    path('admin/stats/', AdminStatsView.as_view(), name='admin-stats'),
+    path('admin/users/', AdminUserListView.as_view(), name='admin-users'),
+    path('admin/users/<int:pk>/', AdminUserDetailView.as_view(), name='admin-user-detail'),
 
     path('notifications/', NotificationListView.as_view(), name='notifications'),
     path('notifications/<int:pk>/read/', NotificationReadView.as_view(), name='notification-read'),
