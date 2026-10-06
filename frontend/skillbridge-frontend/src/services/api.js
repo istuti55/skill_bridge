@@ -390,11 +390,6 @@ export const updateApplicationStage = async (
   );
 };
 
-// ==================== CANDIDATE DASHBOARD ====================
-
-export const getCandidateDashboard = async () => {
-  return request("/dashboard/candidate/");
-};
 
 // ==================== NOTIFICATIONS ====================
 
