@@ -10,5 +10,4 @@ numpy>=1.26
 sentence-transformers>=3.0
 python-decouple>=3.8
 gunicorn>=22.0
-whitenoise>=6.6$env:OPENBLAS_NUM_THREADS="1"
-python manage.py runserver
+whitenoise>=6.6
