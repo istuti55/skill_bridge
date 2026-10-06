@@ -1,3 +1,4 @@
+
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import ProtectedRoute from "./ProtectedRoute";
@@ -9,6 +10,7 @@ import Register from "../pages/Register/Register";
 import ForgotPassword from "../pages/ForgotPassword/ForgotPassword";
 import CareerDashboard from "../pages/CareerDashboard/CareerDashboard";
 import CompanyDashboard from "../pages/CompanyDashboard/CompanyDashboard";
+import CompanyJobs from "../pages/CompanyJobs/CompanyJobs";
 
 import Resume from "../pages/Resume/Resume";
 import AIAnalysis from "../pages/AIAnalysis/AIAnalysis";
@@ -40,14 +42,17 @@ function AppRoutes() {
         <Route path="/profile" element={<Profile />} />
       </Route>
 
-      {/* Company only (Person 2 adds their pages in this block) */}
+      {/* Company only */}
       <Route element={<ProtectedRoute role="company" />}>
         <Route path="/company" element={<CompanyDashboard />} />
+        <Route path="/company/jobs" element={<CompanyJobs />} />
       </Route>
 
+      {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
 
 export default AppRoutes;
+
