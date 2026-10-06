@@ -1,12 +1,8 @@
 from matching.embeddings import create_embedding
 
 
-text = "Python Django FastAPI SQL Docker"
-
-print("Creating embedding...")
-
-embedding = create_embedding(text)
-
-print("Embedding created.")
-print("Dimensions:", len(embedding))
-print("First values:", embedding[:5])
+def test_embeddings():
+    text = "Python Django FastAPI SQL Docker"
+    embedding = create_embedding(text)
+    assert embedding is not None
+    assert len(embedding) > 0

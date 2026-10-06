@@ -91,6 +91,21 @@ class JobListCreateView(generics.ListCreateAPIView):
             return Job.objects.filter(company__user=user).order_by('-posted_date')
         return Job.objects.filter(status='approved').order_by('-posted_date')
 
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        user = self.request.user
+        if user.is_authenticated and user.role == 'candidate' and hasattr(user, 'candidate'):
+            from .models import JobMatch, Application
+            cand = user.candidate
+            ctx['match_map'] = {
+                m.job_id: float(m.match_score)
+                for m in JobMatch.objects.filter(candidate=cand)
+            }
+            ctx['applied_ids'] = set(
+                Application.objects.filter(candidate=cand).values_list('job_id', flat=True)
+            )
+        return ctx
+
     def create(self, request, *args, **kwargs):
         company = get_object_or_404(Company, user=request.user)
         if not company.approved:

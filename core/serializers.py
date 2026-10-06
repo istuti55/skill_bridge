@@ -11,6 +11,15 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'name', 'email', 'password', 'role']
 
+    def to_internal_value(self, data):
+        # The React form sends "fullName" and no role: accept that too.
+        data = data.copy() if hasattr(data, 'copy') else dict(data)
+        if not data.get('name') and data.get('fullName'):
+            data['name'] = data['fullName']
+        if not data.get('role'):
+            data['role'] = 'candidate'
+        return super().to_internal_value(data)
+
     def validate_role(self, value):
         # Admins can only be created from the terminal (createsuperuser)
         if value not in ('candidate', 'company'):
@@ -66,11 +75,47 @@ class CompanySerializer(serializers.ModelSerializer):
 
 class JobSerializer(serializers.ModelSerializer):
     company_name = serializers.CharField(source='company.company_name', read_only=True)
+    job_type_display = serializers.CharField(source='get_job_type_display', read_only=True)
+    # Only filled in for logged-in candidates (None for companies/admins)
+    match_score = serializers.SerializerMethodField()
+    has_applied = serializers.SerializerMethodField()
 
     class Meta:
         model = Job
-        fields = ['id', 'title', 'description', 'required_skills', 'status', 'posted_date', 'company_name']
+        fields = [
+            'id', 'title', 'description', 'required_skills', 'location',
+            'salary_range', 'job_type', 'job_type_display', 'status',
+            'posted_date', 'company_name', 'match_score', 'has_applied',
+        ]
         read_only_fields = ['status', 'posted_date']
+
+    def _candidate(self):
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        if not user or not user.is_authenticated or user.role != 'candidate':
+            return None
+        return getattr(user, 'candidate', None)
+
+    def get_match_score(self, job):
+        candidate = self._candidate()
+        if candidate is None:
+            return None
+        # The view can pass a ready-made {job_id: score} map to avoid one query per job
+        match_map = self.context.get('match_map')
+        if match_map is not None:
+            return match_map.get(job.id)
+        from .models import JobMatch
+        m = JobMatch.objects.filter(job=job, candidate=candidate).first()
+        return float(m.match_score) if m else None
+
+    def get_has_applied(self, job):
+        candidate = self._candidate()
+        if candidate is None:
+            return None
+        applied = self.context.get('applied_ids')
+        if applied is not None:
+            return job.id in applied
+        return job.applications.filter(candidate=candidate).exists()
 
     def validate_title(self, value):
         value = value.strip()

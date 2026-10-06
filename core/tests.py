@@ -1,7 +1,7 @@
 from unittest.mock import patch
 
 from django.test import TestCase
-from rest_framework.test import APIClient
+from rest_framework.test import APIClient, APITestCase
 
 from .analysis import classify, gap_summary
 from .models import (Application, Candidate, Company, Job, JobMatch,
@@ -149,3 +149,49 @@ class ApiTests(TestCase):
         self.job.save()
         self.assertEqual(self.client_for(self.cand_user).get('/api/dashboard/candidate/').status_code, 200)
         self.assertEqual(self.client_for(self.company_user).get('/api/dashboard/company/').status_code, 200)
+
+class JobFieldsAndMatchScoreTests(APITestCase):
+    """Jobs page needs location/salary/type and, for candidates, match_score."""
+
+    def setUp(self):
+        from .models import User, Candidate, Company, Job, JobMatch
+        cu = User.objects.create_user(email='c@x.com', password='Test1234!xy', name='Cand', role='candidate') \
+            if hasattr(User.objects, 'create_user') else None
+        if cu is None:
+            cu = User(email='c@x.com', name='Cand', role='candidate'); cu.set_password('Test1234!xy'); cu.save()
+        self.candidate = Candidate.objects.create(user=cu, cv_file_path='cvs/a.pdf')
+        ku = User(email='k@x.com', name='Comp', role='company'); ku.set_password('Test1234!xy'); ku.save()
+        company = Company.objects.create(user=ku, company_name='Acme', approved=True)
+        self.job = Job.objects.create(
+            company=company, title='Backend Dev', required_skills=['Python'],
+            location='Biratnagar', salary_range='NPR 60k-80k', job_type='internship', status='approved',
+        )
+        JobMatch.objects.create(job=self.job, candidate=self.candidate, match_score=72.5)
+        self.cu, self.ku = cu, ku
+
+    def test_candidate_sees_fields_and_match_score(self):
+        self.client.force_authenticate(self.cu)
+        res = self.client.get('/api/jobs/')
+        self.assertEqual(res.status_code, 200)
+        row = res.data[0] if isinstance(res.data, list) else res.data['results'][0]
+        self.assertEqual(row['location'], 'Biratnagar')
+        self.assertEqual(row['salary_range'], 'NPR 60k-80k')
+        self.assertEqual(row['job_type'], 'internship')
+        self.assertEqual(row['job_type_display'], 'Internship')
+        self.assertEqual(row['match_score'], 72.5)
+        self.assertFalse(row['has_applied'])
+
+    def test_company_gets_no_match_score(self):
+        self.client.force_authenticate(self.ku)
+        res = self.client.get('/api/jobs/')
+        row = res.data[0] if isinstance(res.data, list) else res.data['results'][0]
+        self.assertIsNone(row['match_score'])
+
+    def test_company_can_post_job_with_new_fields(self):
+        self.client.force_authenticate(self.ku)
+        res = self.client.post('/api/jobs/', {
+            'title': 'QA', 'required_skills': ['Testing'],
+            'location': 'Kathmandu', 'salary_range': '50k', 'job_type': 'remote',
+        }, format='json')
+        self.assertEqual(res.status_code, 201, res.data)
+        self.assertEqual(res.data['job_type'], 'remote')

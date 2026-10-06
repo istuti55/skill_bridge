@@ -1,38 +1,30 @@
 import json
-
+import pytest
 from parsing.job_parser import parse_job
 
 
-job_description = """
-We are looking for a Backend Developer.
+@pytest.mark.ollama
+def test_job_parser():
+    job_description = """
+    We are looking for a Backend Developer.
 
-Requirements:
-- Python
-- FastAPI
-- SQL
-- Git
-- Docker
-- 2 years of backend development experience
+    Requirements:
+    - Python
+    - FastAPI
+    - SQL
+    - Git
+    - Docker
+    - 2 years of backend development experience
 
-Bachelor's degree in Computer Engineering or related field preferred.
+    Bachelor's degree in Computer Engineering or related field preferred.
 
-Responsibilities:
-- Develop backend APIs
-- Design database systems
-- Maintain scalable applications
-"""
+    Responsibilities:
+    - Develop backend APIs
+    - Design database systems
+    - Maintain scalable applications
+    """
 
+    result = parse_job(job_description)
 
-print("Parsing job description...")
-
-result = parse_job(job_description)
-
-print("\n===== JOB JSON =====\n")
-
-print(
-    json.dumps(
-        result,
-        indent=4,
-        ensure_ascii=False
-    )
-)
+    assert isinstance(result, dict)
+    assert "required_skills" in result
