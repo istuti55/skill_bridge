@@ -1,4 +1,7 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
+
+import ProtectedRoute from "./ProtectedRoute";
+import PublicOnlyRoute from "./PublicOnlyRoute";
 
 import Home from "../pages/Home/Home";
 import Login from "../pages/Login/Login";
@@ -16,23 +19,33 @@ import Profile from "../pages/Profile/Profile";
 function AppRoutes() {
   return (
     <Routes>
-      {/* Main Pages */}
+      {/* Public */}
       <Route path="/" element={<Home />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
 
-      {/* Dashboards */}
-      <Route path="/career" element={<CareerDashboard />} />
-      <Route path="/dashboard" element={<CareerDashboard />} />
-      <Route path="/company" element={<CompanyDashboard />} />
+      {/* Login / Register: redirect away if already logged in */}
+      <Route element={<PublicOnlyRoute />}>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+      </Route>
 
-      {/* Career Pages */}
-      <Route path="/resume" element={<Resume />} />
-      <Route path="/ai-analysis" element={<AIAnalysis />} />
-      <Route path="/jobs" element={<Jobs />} />
-      <Route path="/interviews" element={<Interviews />} />
-      <Route path="/profile" element={<Profile />} />
+      {/* Candidate only */}
+      <Route element={<ProtectedRoute role="candidate" />}>
+        <Route path="/career" element={<CareerDashboard />} />
+        <Route path="/dashboard" element={<CareerDashboard />} />
+        <Route path="/resume" element={<Resume />} />
+        <Route path="/ai-analysis" element={<AIAnalysis />} />
+        <Route path="/jobs" element={<Jobs />} />
+        <Route path="/interviews" element={<Interviews />} />
+        <Route path="/profile" element={<Profile />} />
+      </Route>
+
+      {/* Company only (Person 2 adds their pages in this block) */}
+      <Route element={<ProtectedRoute role="company" />}>
+        <Route path="/company" element={<CompanyDashboard />} />
+      </Route>
+
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

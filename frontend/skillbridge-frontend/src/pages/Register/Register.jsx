@@ -1,4 +1,3 @@
-
 import { User, Mail } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -20,9 +19,12 @@ function Register() {
     handleSubmit,
     watch,
     formState: { errors, isSubmitting },
-  } = useForm();
+  } = useForm({
+    defaultValues: { role: "candidate" },
+  });
 
   const password = watch("password");
+  const role = watch("role");
 
   const onSubmit = async (data) => {
     toast.loading("Creating your account...", {
@@ -31,9 +33,10 @@ function Register() {
 
     try {
       await registerUser({
-        fullName: data.fullName,
+        name: data.fullName,
         email: data.email,
         password: data.password,
+        role: data.role || "candidate",
       });
 
       toast.success("Registration Successful 🎉", {
@@ -55,14 +58,30 @@ function Register() {
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
 
+        {/* Account type */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            I am a
+          </label>
+          <select
+            {...register("role")}
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+          >
+            <option value="candidate">Job Seeker (Candidate)</option>
+            <option value="company">Company / Recruiter</option>
+          </select>
+        </div>
+
         <AuthInput
-          label="Full Name"
+          label={role === "company" ? "Company Name" : "Full Name"}
           type="text"
-          placeholder="Enter your full name"
+          placeholder={
+            role === "company" ? "Enter your company name" : "Enter your full name"
+          }
           icon={<User size={20} />}
           register={(name) =>
             register(name, {
-              required: "Full name is required",
+              required: "Name is required",
             })
           }
           name="fullName"
@@ -154,4 +173,3 @@ function Register() {
 }
 
 export default Register;
-

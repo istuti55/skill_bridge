@@ -1,4 +1,3 @@
-
 import { Mail } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -10,7 +9,7 @@ import AuthInput from "../../components/Auth/AuthInput/AuthInput";
 import PasswordInput from "../../components/Auth/PasswordInput/PasswordInput";
 import AuthButton from "../../components/Auth/AuthButton/AuthButton";
 
-import { loginUser } from "../../services/api";
+import { loginUser, getHomeRoute } from "../../services/api";
 
 function Login() {
   const navigate = useNavigate();
@@ -27,13 +26,14 @@ function Login() {
     });
 
     try {
-      await loginUser(data.email, data.password);
+      const result = await loginUser(data.email, data.password);
 
       toast.success("Login Successful 🎉", {
         id: "login",
       });
 
-      navigate("/dashboard");
+      // Candidates go to /dashboard, companies go to /company
+      navigate(getHomeRoute(result.user?.role), { replace: true });
     } catch (error) {
       toast.error(error.message || "Login Failed ❌", {
         id: "login",
@@ -71,10 +71,6 @@ function Login() {
           register={(name) =>
             register(name, {
               required: "Password is required",
-              minLength: {
-                value: 6,
-                message: "Password must be at least 6 characters",
-              },
             })
           }
           name="password"
@@ -126,4 +122,3 @@ function Login() {
 }
 
 export default Login;
-
