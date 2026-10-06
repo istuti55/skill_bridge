@@ -17,7 +17,10 @@ import { motion } from "framer-motion";
 
 import Sidebar from "../../components/Dashboard/Sidebar/Sidebar";
 import Topbar from "../../components/Dashboard/Topbar/Topbar";
-import { getMyProfile } from "../../services/api";
+import {
+  getMyProfile,
+  updateMyProfile, // NEW
+} from "../../services/api";
 
 function Profile() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -42,61 +45,23 @@ function Profile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // NEW: save state
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+
   useEffect(() => {
     const loadProfile = async () => {
       try {
         const data = await getMyProfile();
 
-        console.log(
-          "REAL PROFILE DATA:",
-          JSON.stringify(data, null, 2)
-        );
-
-        const storedUser = JSON.parse(
-          localStorage.getItem("user") || "{}"
-        );
-
-        const savedProfile = JSON.parse(
-          localStorage.getItem("profile") || "{}"
-        );
-
+        // CHANGED: everything now comes from the backend
         setProfile({
-          name:
-            savedProfile.name ||
-            storedUser.name ||
-            storedUser.username ||
-            "User",
-
-          email:
-            savedProfile.email ||
-            storedUser.email ||
-            "",
-
-          phone:
-            savedProfile.phone ||
-            data.phone ||
-            data.phone_number ||
-            "",
-
-          location:
-            savedProfile.location ||
-            data.location ||
-            data.address ||
-            "",
-
-          role:
-            savedProfile.role ||
-            data.current_role ||
-            data.job_title ||
-            data.target_role ||
-            "Job Seeker",
-
-          bio:
-            savedProfile.bio ||
-            data.bio ||
-            data.about ||
-            data.description ||
-            "",
+          name: data.name || "",
+          email: data.email || "",
+          phone: data.phone || "",
+          location: data.location || "",
+          role: data.current_role || "",
+          bio: data.bio || "",
         });
 
         setCandidateData({
@@ -128,30 +93,38 @@ function Profile() {
     }));
   };
 
-  const handleSave = () => {
-    localStorage.setItem(
-      "profile",
-      JSON.stringify(profile)
-    );
+  // CHANGED: saves to the backend instead of localStorage
+  const handleSave = async () => {
+    setSaving(true);
+    setSaveError("");
 
-    const storedUser = JSON.parse(
-      localStorage.getItem("user") || "{}"
-    );
+    try {
+      const updated = await updateMyProfile({
+        name: profile.name,
+        email: profile.email,
+        phone: profile.phone,
+        location: profile.location,
+        current_role: profile.role,
+        bio: profile.bio,
+      });
 
-    const updatedUser = {
-      ...storedUser,
-      name: profile.name,
-      email: profile.email,
-    };
+      setProfile({
+        name: updated.name || "",
+        email: updated.email || "",
+        phone: updated.phone || "",
+        location: updated.location || "",
+        role: updated.current_role || "",
+        bio: updated.bio || "",
+      });
 
-    localStorage.setItem(
-      "user",
-      JSON.stringify(updatedUser)
-    );
-
-    setEditing(false);
-
-    alert("Profile updated successfully!");
+      setEditing(false);
+    } catch (err) {
+      setSaveError(
+        err.message || "Could not save your profile."
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   const getInitials = (name) => {
@@ -240,6 +213,20 @@ function Profile() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
               >
+                {/* NEW: SAVE ERROR */}
+                {saveError && (
+                  <div className="bg-red-50 border border-red-200 text-red-600 rounded-xl p-4 mb-6">
+                    <div className="flex items-center gap-2 font-semibold">
+                      <AlertCircle size={18} />
+                      Could not save changes
+                    </div>
+
+                    <p className="text-sm mt-1">
+                      {saveError}
+                    </p>
+                  </div>
+                )}
+
                 {/* PROFILE HEADER */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 border-b border-gray-100 pb-6">
 
@@ -254,7 +241,7 @@ function Profile() {
                       </h2>
 
                       <p className="text-purple-600 font-medium mt-1">
-                        {profile.role}
+                        {profile.role || "Job Seeker"}
                       </p>
                     </div>
                   </div>
@@ -262,7 +249,10 @@ function Profile() {
                   {!editing ? (
                     <button
                       type="button"
-                      onClick={() => setEditing(true)}
+                      onClick={() => {
+                        setSaveError("");
+                        setEditing(true);
+                      }}
                       className="flex items-center justify-center gap-2 bg-purple-600 hover:bg-pink-600 text-white px-5 py-2.5 rounded-xl transition"
                     >
                       <Edit3 size={18} />
@@ -272,10 +262,11 @@ function Profile() {
                     <button
                       type="button"
                       onClick={handleSave}
-                      className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-xl transition"
+                      disabled={saving}
+                      className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-xl transition disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       <Save size={18} />
-                      Save Changes
+                      {saving ? "Saving..." : "Save Changes"}
                     </button>
                   )}
                 </div>

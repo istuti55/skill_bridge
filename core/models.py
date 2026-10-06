@@ -46,6 +46,12 @@ class Candidate(models.Model):
     education = models.JSONField(default=list)
     experience_years = models.DecimalField(max_digits=4, decimal_places=1, default=0)
     resume_score = models.SmallIntegerField(null=True, blank=True)
+
+    phone = models.CharField(max_length=30, blank=True, default='')
+    location = models.CharField(max_length=150, blank=True, default='')
+    current_role = models.CharField(max_length=150, blank=True, default='')
+    bio = models.TextField(blank=True, default='')
+
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):

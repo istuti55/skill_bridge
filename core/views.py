@@ -23,7 +23,10 @@ if AI_DIR not in sys.path:
     sys.path.insert(0, AI_DIR)
 
 from .models import User, Candidate, Job, Application, SkillGap, Notification, JobMatch
-from .serializers import UserRegisterSerializer, UserSerializer, JobSerializer, ApplicationSerializer
+from .serializers import (
+    UserRegisterSerializer, UserSerializer, JobSerializer,
+    ApplicationSerializer, CandidateProfileSerializer,
+)
 from .ai_service import generate_gap_narrative, AIServiceError
 from parsing.resume_parser import parse_resume
 from .ai_bridge import get_skill_gap, get_career_recommendation
@@ -222,6 +225,12 @@ class MyProfileView(APIView):
 
         cv_path = candidate.cv_file_path
         return Response({
+            'name': candidate.user.name,
+            'email': candidate.user.email,
+            'phone': candidate.phone,
+            'location': candidate.location,
+            'current_role': candidate.current_role,
+            'bio': candidate.bio,
             'cv_file_path': f"{settings.MEDIA_URL}{cv_path}" if cv_path else '',
             'extracted_skills': candidate.extracted_skills,
             'education': candidate.education,
@@ -231,6 +240,15 @@ class MyProfileView(APIView):
                 candidate.extracted_skills, candidate.education,
                 candidate.experience_years, has_cv=bool(cv_path)),
         })
+
+    def patch(self, request):
+        candidate = get_object_or_404(Candidate, user=request.user)
+        serializer = CandidateProfileSerializer(
+            candidate, data=request.data, partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
 
 # ---------------- Jobs: admin approval ----------------

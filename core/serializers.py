@@ -1,3 +1,5 @@
+import re
+
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 
@@ -56,6 +58,55 @@ class CVUploadSerializer(serializers.ModelSerializer):
     class Meta:
         model = Candidate
         fields = ['cv_file_path']
+
+
+class CandidateProfileSerializer(serializers.ModelSerializer):
+    """
+    Used by PATCH /api/candidates/me/.
+    Edits the candidate's profile fields and the user's name/email together.
+    """
+    name = serializers.CharField(source='user.name', max_length=150, required=False)
+    email = serializers.EmailField(source='user.email', required=False)
+
+    class Meta:
+        model = Candidate
+        fields = ['name', 'email', 'phone', 'location', 'current_role', 'bio']
+
+    def validate_name(self, value):
+        value = value.strip()
+        if not value:
+            raise serializers.ValidationError('Name cannot be empty.')
+        return value
+
+    def validate_email(self, value):
+        value = value.strip()
+        # Email is the login identifier, so it must stay unique
+        taken = User.objects.filter(email__iexact=value).exclude(
+            pk=self.instance.user.pk
+        )
+        if taken.exists():
+            raise serializers.ValidationError('This email is already in use.')
+        return value
+
+    def validate_phone(self, value):
+        value = value.strip()
+        if value and not re.fullmatch(r'[0-9+\-\s()]{7,20}', value):
+            raise serializers.ValidationError('Enter a valid phone number.')
+        return value
+
+    def validate_bio(self, value):
+        if len(value) > 1000:
+            raise serializers.ValidationError('Bio must be 1000 characters or less.')
+        return value
+
+    def update(self, instance, validated_data):
+        # name and email live on the User model, not on Candidate
+        user_data = validated_data.pop('user', {})
+        if user_data:
+            for field, value in user_data.items():
+                setattr(instance.user, field, value)
+            instance.user.save()
+        return super().update(instance, validated_data)
 
 
 class CompanySerializer(serializers.ModelSerializer):
