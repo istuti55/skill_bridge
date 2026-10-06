@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import {
   User,
@@ -190,10 +189,10 @@ function Profile() {
             transition={{ duration: 0.5 }}
           >
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
                 <User
                   size={26}
-                  className="text-blue-600"
+                  className="text-purple-600"
                 />
               </div>
 
@@ -245,7 +244,7 @@ function Profile() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 border-b border-gray-100 pb-6">
 
                   <div className="flex items-center gap-5">
-                    <div className="w-20 h-20 rounded-full bg-blue-600 text-white flex items-center justify-center text-3xl font-bold">
+                    <div className="w-20 h-20 rounded-full bg-purple-600 text-white flex items-center justify-center text-3xl font-bold">
                       {getInitials(profile.name)}
                     </div>
 
@@ -254,7 +253,7 @@ function Profile() {
                         {profile.name}
                       </h2>
 
-                      <p className="text-blue-600 font-medium mt-1">
+                      <p className="text-purple-600 font-medium mt-1">
                         {profile.role}
                       </p>
                     </div>
@@ -264,7 +263,7 @@ function Profile() {
                     <button
                       type="button"
                       onClick={() => setEditing(true)}
-                      className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl transition"
+                      className="flex items-center justify-center gap-2 bg-purple-600 hover:bg-pink-600 text-white px-5 py-2.5 rounded-xl transition"
                     >
                       <Edit3 size={18} />
                       Edit Profile
@@ -308,7 +307,7 @@ function Profile() {
                           onChange={handleChange}
                           disabled={!editing}
                           placeholder="Enter your full name"
-                          className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-600"
+                          className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-50 disabled:text-gray-600"
                         />
                       </div>
                     </div>
@@ -332,7 +331,7 @@ function Profile() {
                           onChange={handleChange}
                           disabled={!editing}
                           placeholder="Enter your email"
-                          className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-600"
+                          className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-50 disabled:text-gray-600"
                         />
                       </div>
                     </div>
@@ -356,7 +355,7 @@ function Profile() {
                           onChange={handleChange}
                           disabled={!editing}
                           placeholder="Enter your phone number"
-                          className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-600"
+                          className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-50 disabled:text-gray-600"
                         />
                       </div>
                     </div>
@@ -380,7 +379,7 @@ function Profile() {
                           onChange={handleChange}
                           disabled={!editing}
                           placeholder="Enter your location"
-                          className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-600"
+                          className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-50 disabled:text-gray-600"
                         />
                       </div>
                     </div>
@@ -412,7 +411,7 @@ function Profile() {
                         onChange={handleChange}
                         disabled={!editing}
                         placeholder="Enter your current role"
-                        className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-600"
+                        className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-50 disabled:text-gray-600"
                       />
                     </div>
                   </div>
@@ -430,7 +429,7 @@ function Profile() {
                       disabled={!editing}
                       placeholder="Tell us about yourself..."
                       rows="4"
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-600 resize-none"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-50 disabled:text-gray-600 resize-none"
                     />
                   </div>
                 </div>
@@ -447,10 +446,10 @@ function Profile() {
                 }}
               >
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-11 h-11 rounded-xl bg-blue-100 flex items-center justify-center">
+                  <div className="w-11 h-11 rounded-xl bg-purple-100 flex items-center justify-center">
                     <FileText
                       size={22}
-                      className="text-blue-600"
+                      className="text-purple-600"
                     />
                   </div>
 
@@ -468,11 +467,11 @@ function Profile() {
                 {/* STATS */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
 
-                  <div className="bg-blue-50 rounded-xl p-5">
+                  <div className="bg-purple-50 rounded-xl p-5">
                     <div className="flex items-center gap-3">
                       <Award
                         size={22}
-                        className="text-blue-600"
+                        className="text-purple-600"
                       />
 
                       <div>
@@ -531,7 +530,7 @@ function Profile() {
                   <div className="flex items-center gap-2 mb-4">
                     <Code2
                       size={20}
-                      className="text-blue-600"
+                      className="text-purple-600"
                     />
 
                     <h4 className="font-bold text-gray-800">
@@ -564,7 +563,7 @@ function Profile() {
                   <div className="flex items-center gap-2 mb-4">
                     <GraduationCap
                       size={20}
-                      className="text-blue-600"
+                      className="text-purple-600"
                     />
 
                     <h4 className="font-bold text-gray-800">
@@ -614,4 +613,3 @@ function Profile() {
 }
 
 export default Profile;
-

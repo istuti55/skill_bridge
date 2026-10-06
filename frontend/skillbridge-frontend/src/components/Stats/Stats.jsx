@@ -1,4 +1,3 @@
-
 import {
   GraduationCap,
   Briefcase,
@@ -35,14 +34,14 @@ function Stats() {
   ];
 
   return (
-    <section className="py-24 bg-gradient-to-r from-blue-600 to-indigo-700">
+    <section className="py-24 bg-gradient-to-r from-purple-600 to-pink-600">
       <div className="max-w-7xl mx-auto px-6">
 
         <h2 className="text-4xl font-bold text-center text-white">
           Our Impact
         </h2>
 
-        <p className="text-center text-blue-100 mt-4 mb-14">
+        <p className="text-center text-purple-100 mt-4 mb-14">
           Thousands of students and companies trust SkillBridge to build successful careers.
         </p>
 
@@ -52,7 +51,7 @@ function Stats() {
               key={index}
               className="bg-white rounded-2xl p-8 text-center shadow-xl hover:scale-105 transition duration-300"
             >
-              <div className="text-blue-600 flex justify-center mb-5">
+              <div className="text-purple-600 flex justify-center mb-5">
                 {item.icon}
               </div>
 

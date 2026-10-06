@@ -9,7 +9,7 @@ function Navbar() {
         {/* Logo */}
         <NavLink
           to="/"
-          className="text-3xl font-bold text-blue-600"
+          className="text-3xl font-bold text-purple-600"
         >
           SkillBridge
         </NavLink>
@@ -21,7 +21,9 @@ function Navbar() {
             <NavLink
               to="/"
               className={({ isActive }) =>
-                isActive ? "text-blue-600 font-semibold" : "hover:text-blue-600"
+                isActive
+                  ? "text-purple-600 font-semibold"
+                  : "hover:text-pink-600"
               }
             >
               Home
@@ -29,13 +31,13 @@ function Navbar() {
           </li>
 
           <li>
-            <a href="#features" className="hover:text-blue-600">
+            <a href="#features" className="hover:text-pink-600">
               Features
             </a>
           </li>
 
           <li>
-            <a href="#about" className="hover:text-blue-600">
+            <a href="#about" className="hover:text-pink-600">
               About
             </a>
           </li>
@@ -47,7 +49,7 @@ function Navbar() {
 
           <NavLink
             to="/login"
-            className="flex items-center gap-2 border border-blue-600 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition"
+            className="flex items-center gap-2 border border-purple-600 text-purple-600 px-4 py-2 rounded-lg hover:bg-purple-50 transition"
           >
             <LogIn size={18} />
             Login
@@ -55,7 +57,7 @@ function Navbar() {
 
           <NavLink
             to="/register"
-            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+            className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-pink-600 transition"
           >
             <User size={18} />
             Register

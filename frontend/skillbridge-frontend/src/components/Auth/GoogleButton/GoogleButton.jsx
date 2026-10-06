@@ -23,7 +23,7 @@ function GoogleButton({
         font-semibold
         transition-all
         duration-300
-        hover:border-blue-500
+        hover:border-purple-500
         hover:bg-gray-50
         hover:shadow-lg
         hover:-translate-y-1

@@ -1,5 +1,4 @@
-
-import { MapPin, DollarSign, Briefcase, CheckCircle } from "lucide-react";
+﻿import { MapPin, DollarSign, Briefcase, CheckCircle } from "lucide-react";
 
 function JobCard({
   company,
@@ -16,10 +15,10 @@ function JobCard({
   applying = false,
 }) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+    <div className="bg-white rounded-2xl border border-purple-100 p-6 shadow-sm hover:shadow-md transition-shadow">
       <div className="flex justify-between items-start gap-4">
         <div>
-          <h3 className="text-xl font-bold text-gray-800">
+          <h3 className="text-xl font-bold text-black">
             {title}
           </h3>
 
@@ -63,7 +62,7 @@ function JobCard({
           {requiredSkills.map((skill, index) => (
             <span
               key={index}
-              className="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full text-xs"
+              className="bg-purple-50 text-purple-700 px-2.5 py-1 rounded-full text-xs"
             >
               {skill}
             </span>
@@ -81,7 +80,7 @@ function JobCard({
           <button
             onClick={() => onApply(jobId)}
             disabled={applying}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition"
+            className="w-full bg-purple-600 hover:bg-pink-600 text-white py-2.5 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
             {applying ? "Applying..." : "Apply Now"}
           </button>

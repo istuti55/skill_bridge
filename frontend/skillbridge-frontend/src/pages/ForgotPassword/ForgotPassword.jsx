@@ -53,7 +53,7 @@ function ForgotPassword() {
           Remember your password?{" "}
           <Link
             to="/login"
-            className="text-blue-600 font-semibold hover:underline"
+            className="text-purple-600 font-semibold hover:underline"
           >
             Back to Login
           </Link>

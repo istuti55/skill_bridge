@@ -50,14 +50,14 @@ function Features() {
   ];
 
   return (
-    <section className="py-24 bg-gray-50">
+    <section className="py-24 bg-purple-50">
       <div className="max-w-7xl mx-auto px-6">
 
-        <h2 className="text-4xl font-bold text-center text-gray-900">
+        <h2 className="text-4xl font-bold text-center text-black">
           Powerful Features
         </h2>
 
-        <p className="text-center text-gray-500 mt-4 mb-16">
+        <p className="text-center text-gray-600 mt-4 mb-16">
           Everything you need to connect talented candidates with the right opportunities.
         </p>
 

@@ -28,9 +28,9 @@ function PasswordInput({
           bg-white
           transition-all
           duration-300
-          focus-within:border-blue-500
+          focus-within:border-purple-500
           focus-within:ring-4
-          focus-within:ring-blue-100
+          focus-within:ring-purple-100
         "
       >
         <Lock
@@ -54,15 +54,15 @@ function PasswordInput({
             p-1.5
             rounded-lg
             text-gray-400
-            hover:text-blue-600
-            hover:bg-blue-50
+            hover:text-pink-600
+            hover:bg-pink-50
             active:scale-95
             transition-all
             duration-300
             ease-in-out
             focus:outline-none
             focus:ring-2
-            focus:ring-blue-200
+            focus:ring-purple-200
           "
         >
           <span

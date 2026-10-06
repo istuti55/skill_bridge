@@ -11,8 +11,8 @@ function AuthButton({
       disabled={loading}
       className={`w-full py-3 rounded-xl font-semibold text-white transition duration-300 flex items-center justify-center gap-2 ${
         loading
-          ? "bg-blue-500 cursor-not-allowed"
-          : "bg-blue-600 hover:bg-blue-700 hover:shadow-lg"
+          ? "bg-purple-400 cursor-not-allowed"
+          : "bg-purple-600 hover:bg-purple-700 hover:shadow-lg"
       }`}
     >
       {loading ? (

@@ -63,9 +63,10 @@ function Register() {
           <label className="block text-sm font-medium text-gray-700 mb-2">
             I am a
           </label>
+
           <select
             {...register("role")}
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-purple-500 bg-white"
           >
             <option value="candidate">Job Seeker (Candidate)</option>
             <option value="company">Company / Recruiter</option>
@@ -76,7 +77,9 @@ function Register() {
           label={role === "company" ? "Company Name" : "Full Name"}
           type="text"
           placeholder={
-            role === "company" ? "Enter your company name" : "Enter your full name"
+            role === "company"
+              ? "Enter your company name"
+              : "Enter your full name"
           }
           icon={<User size={20} />}
           register={(name) =>
@@ -139,7 +142,7 @@ function Register() {
         <label className="flex items-center gap-2 text-sm text-gray-600">
           <input type="checkbox" required />
           I agree to the{" "}
-          <span className="text-blue-600 cursor-pointer hover:underline">
+          <span className="text-purple-600 cursor-pointer hover:text-pink-600 hover:underline">
             Terms & Conditions
           </span>
         </label>
@@ -161,7 +164,7 @@ function Register() {
           Already have an account?{" "}
           <Link
             to="/login"
-            className="text-blue-600 font-semibold hover:underline"
+            className="text-purple-600 font-semibold hover:text-pink-600 hover:underline"
           >
             Login
           </Link>

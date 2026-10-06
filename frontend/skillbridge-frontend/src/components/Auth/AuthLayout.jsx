@@ -4,7 +4,7 @@ function AuthLayout({ title, subtitle, children }) {
   return (
     <section className="min-h-screen grid lg:grid-cols-2">
       {/* Left Side */}
-      <div className="hidden lg:flex bg-gradient-to-br from-blue-600 to-indigo-700 items-center justify-center p-10">
+      <div className="hidden lg:flex bg-gradient-to-br from-purple-600 to-pink-600 items-center justify-center p-10">
         <div className="text-center">
           <img
             src={authImage}
@@ -16,7 +16,7 @@ function AuthLayout({ title, subtitle, children }) {
             Welcome to SkillBridge
           </h2>
 
-          <p className="text-blue-100 mt-4 text-lg leading-8">
+          <p className="text-purple-100 mt-4 text-lg leading-8">
             AI-powered recruitment platform connecting students,
             job seekers and companies through intelligent career
             recommendations.

@@ -25,9 +25,9 @@ function AuthInput({
           bg-white
           transition-all
           duration-300
-          focus-within:border-blue-500
+          focus-within:border-purple-500
           focus-within:ring-4
-          focus-within:ring-blue-100
+          focus-within:ring-purple-100
         "
       >
         <span className="text-gray-400 mr-3 flex-shrink-0">

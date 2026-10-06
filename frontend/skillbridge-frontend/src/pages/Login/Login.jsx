@@ -81,14 +81,14 @@ function Login() {
           <label className="flex items-center gap-2 text-gray-700">
             <input
               type="checkbox"
-              className="w-4 h-4 accent-blue-600"
+              className="w-4 h-4 accent-purple-600"
             />
             Remember Me
           </label>
 
           <Link
             to="/forgot-password"
-            className="text-blue-600 hover:text-blue-700 hover:underline transition-colors"
+            className="text-purple-600 hover:text-pink-600 hover:underline transition-colors"
           >
             Forgot Password?
           </Link>
@@ -111,7 +111,7 @@ function Login() {
           Don't have an account?{" "}
           <Link
             to="/register"
-            className="text-blue-600 font-semibold hover:underline"
+            className="text-purple-600 font-semibold hover:text-pink-600 hover:underline"
           >
             Register
           </Link>

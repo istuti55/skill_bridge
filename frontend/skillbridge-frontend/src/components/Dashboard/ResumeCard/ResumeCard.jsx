@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import {
   Upload,
@@ -130,21 +129,21 @@ function ResumeCard({ onAnalysisComplete }) {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+    <div className="bg-white rounded-2xl shadow-sm border border-purple-100 p-8">
 
       {/* Header */}
       <div className="mb-7">
         <div className="flex items-center gap-3">
 
-          <div className="w-11 h-11 rounded-xl bg-blue-100 flex items-center justify-center">
+          <div className="w-11 h-11 rounded-xl bg-purple-100 flex items-center justify-center">
             <FileText
               size={24}
-              className="text-blue-600"
+              className="text-purple-600"
             />
           </div>
 
           <div>
-            <h2 className="text-2xl font-bold text-gray-800">
+            <h2 className="text-2xl font-bold text-black">
               Resume Management
             </h2>
 
@@ -180,8 +179,8 @@ function ResumeCard({ onAnalysisComplete }) {
 
           ${
             dragging
-              ? "border-blue-600 bg-blue-100 scale-[1.01] shadow-lg"
-              : "border-blue-300 bg-gradient-to-br from-white to-blue-50 hover:border-blue-500 hover:shadow-lg"
+              ? "border-purple-600 bg-purple-100 scale-[1.01] shadow-lg"
+              : "border-purple-300 bg-gradient-to-br from-white to-purple-50 hover:border-pink-500 hover:shadow-lg"
           }
 
           ${
@@ -200,7 +199,7 @@ function ResumeCard({ onAnalysisComplete }) {
             -right-16
             w-40
             h-40
-            bg-blue-100
+            bg-purple-100
             rounded-full
             opacity-40
             group-hover:scale-125
@@ -225,8 +224,8 @@ function ResumeCard({ onAnalysisComplete }) {
 
             ${
               dragging
-                ? "bg-blue-600 scale-110"
-                : "bg-blue-100 group-hover:bg-blue-600 group-hover:scale-105"
+                ? "bg-purple-600 scale-110"
+                : "bg-purple-100 group-hover:bg-purple-600 group-hover:scale-105"
             }
           `}
         >
@@ -238,14 +237,14 @@ function ResumeCard({ onAnalysisComplete }) {
               ${
                 dragging
                   ? "text-white"
-                  : "text-blue-600 group-hover:text-white"
+                  : "text-purple-600 group-hover:text-white"
               }
             `}
           />
         </div>
 
         {/* Title */}
-        <h3 className="relative text-xl font-bold text-gray-800">
+        <h3 className="relative text-xl font-bold text-black">
           {dragging
             ? "Drop Your Resume Here"
             : "Upload Your Resume"}
@@ -267,12 +266,12 @@ function ResumeCard({ onAnalysisComplete }) {
             mt-6
             px-7
             py-3
-            bg-blue-600
+            bg-purple-600
             text-white
             rounded-xl
             font-semibold
             shadow-sm
-            group-hover:bg-blue-700
+            group-hover:bg-pink-600
             group-hover:shadow-md
             transition-all
             duration-300
@@ -294,27 +293,27 @@ function ResumeCard({ onAnalysisComplete }) {
 
       {/* Upload / Analysis Progress */}
       {analyzing && (
-        <div className="mt-6 bg-blue-50 rounded-xl p-5">
+        <div className="mt-6 bg-purple-50 rounded-xl p-5">
 
           <div className="flex justify-between items-center text-sm mb-3">
 
-            <div className="flex items-center gap-2 text-blue-700 font-medium">
+            <div className="flex items-center gap-2 text-purple-700 font-medium">
               <Sparkles size={17} />
               AI is analyzing your resume...
             </div>
 
-            <span className="font-bold text-blue-700">
+            <span className="font-bold text-purple-700">
               {uploadProgress}%
             </span>
 
           </div>
 
-          <div className="w-full h-3 bg-blue-100 rounded-full overflow-hidden">
+          <div className="w-full h-3 bg-purple-100 rounded-full overflow-hidden">
 
             <div
               className="
                 h-full
-                bg-blue-600
+                bg-purple-600
                 rounded-full
                 transition-all
                 duration-300
@@ -338,9 +337,9 @@ function ResumeCard({ onAnalysisComplete }) {
             items-center
             justify-between
             gap-4
-            bg-blue-50
+            bg-purple-50
             border
-            border-blue-100
+            border-purple-100
             rounded-xl
             p-4
             hover:shadow-sm
@@ -350,18 +349,18 @@ function ResumeCard({ onAnalysisComplete }) {
 
           <div className="flex items-center gap-3 min-w-0">
 
-            <div className="w-11 h-11 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+            <div className="w-11 h-11 rounded-xl bg-purple-100 flex items-center justify-center flex-shrink-0">
 
               <FileText
                 size={22}
-                className="text-blue-600"
+                className="text-purple-600"
               />
 
             </div>
 
             <div className="min-w-0">
 
-              <p className="font-semibold text-gray-800 truncate">
+              <p className="font-semibold text-black truncate">
                 {file.name}
               </p>
 
@@ -419,8 +418,8 @@ function ResumeCard({ onAnalysisComplete }) {
 
           ${
             analyzing || uploading || !file
-              ? "bg-blue-400 cursor-not-allowed"
-              : "bg-blue-600 hover:bg-blue-700 hover:shadow-lg hover:-translate-y-0.5"
+              ? "bg-purple-400 cursor-not-allowed"
+              : "bg-purple-600 hover:bg-pink-600 hover:shadow-lg hover:-translate-y-0.5"
           }
         `}
       >
@@ -467,4 +466,3 @@ function ResumeCard({ onAnalysisComplete }) {
 }
 
 export default ResumeCard;
-

@@ -115,20 +115,20 @@ function SkillGapAnalysis({ jobId }) {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+    <div className="bg-white rounded-2xl border border-purple-100 p-6 shadow-sm">
 
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
 
-        <div className="w-11 h-11 rounded-xl bg-blue-100 flex items-center justify-center">
+        <div className="w-11 h-11 rounded-xl bg-purple-100 flex items-center justify-center">
           <Target
             size={24}
-            className="text-blue-600"
+            className="text-purple-600"
           />
         </div>
 
         <div>
-          <h2 className="text-xl font-bold text-gray-800">
+          <h2 className="text-xl font-bold text-black">
             Skill Gap Analysis
           </h2>
 
@@ -166,7 +166,7 @@ function SkillGapAnalysis({ jobId }) {
       {!loading &&
         !error &&
         skills.length === 0 && (
-          <div className="bg-gray-50 rounded-xl p-6 text-center">
+          <div className="bg-purple-50 rounded-xl p-6 text-center">
 
             <BookOpen
               size={35}
@@ -229,7 +229,7 @@ function SkillGapAnalysis({ jobId }) {
                   transition={{
                     delay: index * 0.05,
                   }}
-                  className="border border-gray-200 rounded-xl p-4"
+                  className="border border-purple-100 rounded-xl p-4"
                 >
 
                   {/* Skill Header */}
@@ -237,15 +237,15 @@ function SkillGapAnalysis({ jobId }) {
 
                     <div className="flex items-center gap-3">
 
-                      <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center">
                         <BookOpen
                           size={19}
-                          className="text-blue-600"
+                          className="text-purple-600"
                         />
                       </div>
 
                       <div>
-                        <h3 className="font-semibold text-gray-800">
+                        <h3 className="font-semibold text-black">
                           {name}
                         </h3>
 
@@ -313,7 +313,7 @@ function SkillGapAnalysis({ jobId }) {
                               href={link}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-2 rounded-lg text-xs font-medium transition"
+                              className="inline-flex items-center gap-1.5 bg-purple-50 hover:bg-pink-100 text-purple-700 px-3 py-2 rounded-lg text-xs font-medium transition"
                             >
                               Learn Resource{" "}
                               {linkIndex + 1}
@@ -341,18 +341,18 @@ function SkillGapAnalysis({ jobId }) {
       {!loading &&
         !error &&
         skills.length > 0 && (
-          <div className="mt-6 bg-blue-50 rounded-xl p-5">
+          <div className="mt-6 bg-purple-50 rounded-xl p-5">
 
             <div className="flex items-start gap-3">
 
               <TrendingUp
                 size={22}
-                className="text-blue-600 mt-0.5"
+                className="text-purple-600 mt-0.5"
               />
 
               <div className="flex-1">
 
-                <h3 className="font-semibold text-gray-800">
+                <h3 className="font-semibold text-black">
                   AI Recommendation
                 </h3>
 
@@ -366,7 +366,7 @@ function SkillGapAnalysis({ jobId }) {
 
               <ArrowRight
                 size={20}
-                className="text-blue-600"
+                className="text-purple-600"
               />
 
             </div>

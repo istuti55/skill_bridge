@@ -1,4 +1,5 @@
-﻿import { NavLink } from "react-router-dom";
+﻿
+import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
   FileText,
@@ -95,7 +96,7 @@ function Sidebar({ isOpen, setIsOpen }) {
         {/* Logo */}
         <div className="p-6 border-b border-gray-100 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-blue-600">
+            <h1 className="text-3xl font-bold text-purple-600">
               SkillBridge
             </h1>
 
@@ -116,9 +117,9 @@ function Sidebar({ isOpen, setIsOpen }) {
               flex
               items-center
               justify-center
-              text-gray-500
-              hover:bg-gray-100
-              hover:text-gray-800
+              text-gray-600
+              hover:bg-pink-50
+              hover:text-pink-600
               transition
             "
           >
@@ -148,8 +149,8 @@ function Sidebar({ isOpen, setIsOpen }) {
 
                 ${
                   isActive
-                    ? "bg-blue-600 text-white shadow-lg shadow-blue-100"
-                    : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                    ? "bg-purple-600 text-white shadow-lg shadow-purple-100"
+                    : "text-gray-800 hover:bg-pink-50 hover:text-pink-600"
                 }
                 `
               }
@@ -191,3 +192,4 @@ function Sidebar({ isOpen, setIsOpen }) {
 }
 
 export default Sidebar;
+

@@ -26,7 +26,7 @@ function AIAnalysisCard({
         bg-white
         rounded-2xl
         border
-        border-gray-100
+        border-purple-100
         shadow-sm
         hover:shadow-lg
         transition-shadow
@@ -44,9 +44,9 @@ function AIAnalysisCard({
         w-full
         h-1.5
         bg-gradient-to-r
-        from-blue-500
-        via-purple-500
-        to-blue-600
+        from-purple-600
+        via-pink-500
+        to-purple-600
       " />
 
       {/* Header */}
@@ -67,7 +67,7 @@ function AIAnalysisCard({
             w-12
             h-12
             rounded-xl
-            bg-blue-100
+            bg-purple-100
             flex
             items-center
             justify-center
@@ -75,7 +75,7 @@ function AIAnalysisCard({
           ">
             <Sparkles
               size={25}
-              className="text-blue-600"
+              className="text-purple-600"
             />
           </div>
 
@@ -96,12 +96,12 @@ function AIAnalysisCard({
           flex
           items-center
           gap-4
-          bg-blue-50
+          bg-purple-50
           rounded-2xl
           px-5
           py-4
           border
-          border-blue-100
+          border-purple-100
         ">
 
           <div className="
@@ -110,12 +110,12 @@ function AIAnalysisCard({
             rounded-full
             bg-white
             border-4
-            border-blue-500
+            border-purple-500
             flex
             items-center
             justify-center
           ">
-            <span className="text-blue-600 font-bold text-sm">
+            <span className="text-purple-600 font-bold text-sm">
               {score}
             </span>
           </div>
@@ -125,7 +125,7 @@ function AIAnalysisCard({
               Overall Score
             </p>
 
-            <p className="text-2xl font-bold text-blue-600">
+            <p className="text-2xl font-bold text-purple-600">
               {score}%
             </p>
           </div>
@@ -289,8 +289,8 @@ function AIAnalysisCard({
           mt-8
           w-full
           sm:w-auto
-          bg-blue-600
-          hover:bg-blue-700
+          bg-purple-600
+          hover:bg-pink-600
           text-white
           px-6
           py-3

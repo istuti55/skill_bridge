@@ -47,7 +47,7 @@ function Testimonials() {
               </p>
 
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-lg">
+                <div className="w-14 h-14 rounded-full bg-purple-600 text-white flex items-center justify-center font-bold text-lg">
                   {item.name.charAt(0)}
                 </div>
 
