@@ -19,6 +19,7 @@ import {
 import toast from "react-hot-toast";
 
 import {
+  getAdminCandidates,
   getAdminCompanies,
   getAdminJobs,
   getAdminStats,
@@ -34,6 +35,7 @@ const TABS = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "jobs", label: "Job approvals", icon: Briefcase },
   { id: "companies", label: "Companies", icon: Building2 },
+  { id: "candidates", label: "Candidates", icon: UserCheck },
   { id: "users", label: "Users", icon: Users },
 ];
 
@@ -378,6 +380,132 @@ function CompaniesPanel({ companies, loading, onToggle, busyId }) {
   );
 }
 
+
+// ---------------------------------------------------------------
+// Candidates
+// ---------------------------------------------------------------
+
+function CandidatesPanel() {
+  const [candidates, setCandidates] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState("");
+  const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    const t = setTimeout(() => setSearch(query.trim()), 300);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    getAdminCandidates({ q: search })
+      .then((d) => !cancelled && setCandidates(Array.isArray(d) ? d : []))
+      .catch((e) => !cancelled && toast.error(e.message))
+      .finally(() => !cancelled && setLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [search]);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative flex-1 min-w-[220px]">
+          <Search
+            size={18}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+          />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search candidates by name or email"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        {!loading && (
+          <span className="text-sm text-gray-500">
+            {candidates.length} candidate{candidates.length === 1 ? "" : "s"}
+          </span>
+        )}
+      </div>
+
+      {loading ? (
+        <Spinner />
+      ) : candidates.length === 0 ? (
+        <EmptyState>No candidates found.</EmptyState>
+      ) : (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-gray-500 border-b border-gray-100">
+                <th className="px-5 py-3 font-medium">Candidate</th>
+                <th className="px-5 py-3 font-medium">CV</th>
+                <th className="px-5 py-3 font-medium">Skills</th>
+                <th className="px-5 py-3 font-medium">Experience</th>
+                <th className="px-5 py-3 font-medium">Score</th>
+                <th className="px-5 py-3 font-medium">Applications</th>
+                <th className="px-5 py-3 font-medium">Joined</th>
+                <th className="px-5 py-3 font-medium">Account</th>
+              </tr>
+            </thead>
+            <tbody>
+              {candidates.map((c) => (
+                <tr key={c.id} className="border-b border-gray-50 last:border-0 align-top">
+                  <td className="px-5 py-4 font-medium text-gray-900">
+                    {c.name}
+                    <span className="block text-xs text-gray-400 font-normal">
+                      {c.email}
+                    </span>
+                  </td>
+                  <td className="px-5 py-4 text-gray-600">
+                    {c.has_cv ? "Uploaded" : "Not uploaded"}
+                  </td>
+                  <td className="px-5 py-4 max-w-xs">
+                    <div className="flex flex-wrap gap-1.5">
+                      {c.skills.slice(0, 5).map((s, i) => (
+                        <span
+                          key={`${s}-${i}`}
+                          className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-xs"
+                        >
+                          {s}
+                        </span>
+                      ))}
+                      {c.skills.length > 5 && (
+                        <span className="text-xs text-gray-400">
+                          +{c.skills.length - 5}
+                        </span>
+                      )}
+                      {c.skills.length === 0 && (
+                        <span className="text-gray-400">-</span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-5 py-4 text-gray-600">
+                    {c.experience_years} yrs
+                  </td>
+                  <td className="px-5 py-4 text-gray-600">
+                    {c.resume_score ?? "-"}
+                  </td>
+                  <td className="px-5 py-4 text-gray-600">
+                    {c.applications_count}
+                  </td>
+                  <td className="px-5 py-4 text-gray-600">
+                    {formatDate(c.date_joined)}
+                  </td>
+                  <td className="px-5 py-4">
+                    <Badge value={c.is_active ? "approved" : "closed"} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------
 // Users
 // ---------------------------------------------------------------
@@ -545,22 +673,35 @@ function AdminDashboard() {
   const [busyJob, setBusyJob] = useState(null);
   const [busyCompany, setBusyCompany] = useState(null);
 
+  const [loadError, setLoadError] = useState("");
+
   const loadAll = useCallback(async () => {
     setLoadingLists(true);
-    try {
-      const [s, j, c] = await Promise.all([
-        getAdminStats(),
-        getAdminJobs(),
-        getAdminCompanies(),
-      ]);
-      setStats(s);
-      setJobs(Array.isArray(j) ? j : j?.results || []);
-      setCompanies(Array.isArray(c) ? c : c?.results || []);
-    } catch (e) {
-      toast.error(e.message);
-    } finally {
-      setLoadingLists(false);
+    setLoadError("");
+    // Each request is independent: one failing must not blank the others
+    const [s, j, c] = await Promise.allSettled([
+      getAdminStats(),
+      getAdminJobs(),
+      getAdminCompanies(),
+    ]);
+
+    const errors = [];
+    if (s.status === "fulfilled") setStats(s.value);
+    else errors.push(`Stats: ${s.reason?.message}`);
+
+    if (j.status === "fulfilled") {
+      setJobs(Array.isArray(j.value) ? j.value : j.value?.results || []);
+    } else errors.push(`Jobs: ${j.reason?.message}`);
+
+    if (c.status === "fulfilled") {
+      setCompanies(Array.isArray(c.value) ? c.value : c.value?.results || []);
+    } else errors.push(`Companies: ${c.reason?.message}`);
+
+    if (errors.length) {
+      setLoadError(errors.join("  |  "));
+      console.error("Admin load errors:", errors);
     }
+    setLoadingLists(false);
   }, []);
 
   const refreshStats = useCallback(async () => {
@@ -738,6 +879,12 @@ function AdminDashboard() {
         </header>
 
         <main className="p-4 sm:p-6 lg:p-8">
+          {loadError && (
+            <div className="mb-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl p-4 text-sm">
+              <p className="font-medium">Some admin data could not be loaded.</p>
+              <p className="mt-1 break-words">{loadError}</p>
+            </div>
+          )}
           {tab === "overview" && <Overview stats={stats} onGo={goTo} />}
           {tab === "jobs" && (
             <JobsPanel
@@ -755,6 +902,7 @@ function AdminDashboard() {
               busyId={busyCompany}
             />
           )}
+          {tab === "candidates" && <CandidatesPanel />}
           {tab === "users" && <UsersPanel onChanged={refreshStats} />}
         </main>
       </div>
