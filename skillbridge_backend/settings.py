@@ -3,6 +3,7 @@ Django settings for skillbridge_backend project.
 """
 
 from datetime import timedelta
+from email.policy import default
 from pathlib import Path
 
 from decouple import config, Csv
@@ -138,7 +139,7 @@ SIMPLE_JWT = {
 # CORS_ORIGINS=http://localhost:5173,https://skillbridge.vercel.app
 CORS_ALLOWED_ORIGINS = config(
     'CORS_ORIGINS',
-    default='http://localhost:3000,http://localhost:5173,http://localhost:5174,http://127.0.0.1:3000,http://127.0.0.1:5173,http://127.0.0.1:5174',
+    default='http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173',
     cast=Csv(),
 )
 
