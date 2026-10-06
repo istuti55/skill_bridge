@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import {
   Upload,
@@ -7,6 +8,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { uploadResume } from "../../../services/api";
 
 function ResumeCard({ onAnalysisComplete }) {
   const [file, setFile] = useState(null);
@@ -18,46 +20,22 @@ function ResumeCard({ onAnalysisComplete }) {
   const processFile = (selectedFile) => {
     if (!selectedFile) return;
 
-    // File type validation
-    const allowedTypes = [
-      "application/pdf",
-      "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    ];
-
-    if (!allowedTypes.includes(selectedFile.type)) {
-      toast.error("Please upload a PDF, DOC, or DOCX file.");
+    // Backend currently accepts PDF only
+    if (selectedFile.type !== "application/pdf") {
+      toast.error("Please upload a PDF file only.");
       return;
     }
 
-    // File size validation - 5 MB
+    // Maximum 5 MB
     if (selectedFile.size > 5 * 1024 * 1024) {
       toast.error("File size must be less than 5 MB.");
       return;
     }
 
-    setUploading(true);
+    setFile(selectedFile);
     setUploadProgress(0);
 
-    let progress = 0;
-
-    const interval = setInterval(() => {
-      progress += 10;
-
-      setUploadProgress(progress);
-
-      if (progress >= 100) {
-        clearInterval(interval);
-
-        setTimeout(() => {
-          setUploading(false);
-          setFile(selectedFile);
-          setUploadProgress(0);
-
-          toast.success("Resume uploaded successfully!");
-        }, 300);
-      }
-    }, 150);
+    toast.success("Resume selected successfully!");
   };
 
   const handleFileChange = (e) => {
@@ -72,7 +50,7 @@ function ResumeCard({ onAnalysisComplete }) {
   const handleDragOver = (e) => {
     e.preventDefault();
 
-    if (!uploading) {
+    if (!uploading && !analyzing) {
       setDragging(true);
     }
   };
@@ -87,7 +65,7 @@ function ResumeCard({ onAnalysisComplete }) {
 
     setDragging(false);
 
-    if (uploading) return;
+    if (uploading || analyzing) return;
 
     const droppedFile = e.dataTransfer.files[0];
 
@@ -97,6 +75,8 @@ function ResumeCard({ onAnalysisComplete }) {
   };
 
   const removeFile = () => {
+    if (uploading || analyzing) return;
+
     setFile(null);
     setUploadProgress(0);
 
@@ -105,24 +85,48 @@ function ResumeCard({ onAnalysisComplete }) {
     });
   };
 
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
     if (!file) {
       toast.error("Please upload a resume first.");
       return;
     }
 
-    setAnalyzing(true);
+    try {
+      setAnalyzing(true);
+      setUploadProgress(10);
 
-    setTimeout(() => {
-      setAnalyzing(false);
+      toast.loading("Uploading resume and analyzing with AI...", {
+        id: "resume-analysis",
+      });
 
-      toast.success("AI analysis completed successfully!");
+      // REAL BACKEND API CALL
+      const result = await uploadResume(file);
 
-      // Tell CareerDashboard that analysis is complete
+      setUploadProgress(100);
+
+      console.log("Real AI analysis response:", result);
+
+      toast.success("AI analysis completed successfully!", {
+        id: "resume-analysis",
+      });
+
+      // Send the REAL backend result to CareerDashboard
       if (onAnalysisComplete) {
-        onAnalysisComplete();
+        onAnalysisComplete(result);
       }
-    }, 2500);
+    } catch (error) {
+      console.error("Resume analysis failed:", error);
+
+      toast.error(
+        error.message || "Failed to analyze resume. Please try again.",
+        {
+          id: "resume-analysis",
+        }
+      );
+    } finally {
+      setAnalyzing(false);
+      setUploadProgress(0);
+    }
   };
 
   return (
@@ -181,7 +185,7 @@ function ResumeCard({ onAnalysisComplete }) {
           }
 
           ${
-            uploading
+            uploading || analyzing
               ? "cursor-not-allowed opacity-70"
               : "cursor-pointer"
           }
@@ -253,7 +257,7 @@ function ResumeCard({ onAnalysisComplete }) {
         </p>
 
         <span className="relative text-sm text-gray-400 mt-2">
-          PDF, DOC, DOCX • Maximum 5 MB
+          PDF • Maximum 5 MB
         </span>
 
         {/* Browse Button */}
@@ -280,23 +284,23 @@ function ResumeCard({ onAnalysisComplete }) {
         {/* Hidden Input */}
         <input
           type="file"
-          accept=".pdf,.doc,.docx"
+          accept=".pdf,application/pdf"
           className="hidden"
-          disabled={uploading}
+          disabled={uploading || analyzing}
           onChange={handleFileChange}
         />
 
       </label>
 
-      {/* Upload Progress */}
-      {uploading && (
+      {/* Upload / Analysis Progress */}
+      {analyzing && (
         <div className="mt-6 bg-blue-50 rounded-xl p-5">
 
           <div className="flex justify-between items-center text-sm mb-3">
 
             <div className="flex items-center gap-2 text-blue-700 font-medium">
-              <Upload size={17} />
-              Uploading Resume...
+              <Sparkles size={17} />
+              AI is analyzing your resume...
             </div>
 
             <span className="font-bold text-blue-700">
@@ -313,7 +317,7 @@ function ResumeCard({ onAnalysisComplete }) {
                 bg-blue-600
                 rounded-full
                 transition-all
-                duration-150
+                duration-300
               "
               style={{
                 width: `${uploadProgress}%`,
@@ -326,7 +330,7 @@ function ResumeCard({ onAnalysisComplete }) {
       )}
 
       {/* Selected File */}
-      {file && !uploading && (
+      {file && !analyzing && (
         <div
           className="
             mt-6
@@ -397,7 +401,7 @@ function ResumeCard({ onAnalysisComplete }) {
       <button
         type="button"
         onClick={handleAnalyze}
-        disabled={analyzing || uploading}
+        disabled={analyzing || uploading || !file}
         className={`
           mt-6
           w-full
@@ -414,7 +418,7 @@ function ResumeCard({ onAnalysisComplete }) {
           shadow-sm
 
           ${
-            analyzing || uploading
+            analyzing || uploading || !file
               ? "bg-blue-400 cursor-not-allowed"
               : "bg-blue-600 hover:bg-blue-700 hover:shadow-lg hover:-translate-y-0.5"
           }
@@ -463,3 +467,4 @@ function ResumeCard({ onAnalysisComplete }) {
 }
 
 export default ResumeCard;
+

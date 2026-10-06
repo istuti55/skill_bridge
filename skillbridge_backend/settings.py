@@ -3,7 +3,6 @@ Django settings for skillbridge_backend project.
 """
 
 from datetime import timedelta
-from email.policy import default
 from pathlib import Path
 
 from decouple import config, Csv
@@ -144,6 +143,12 @@ CORS_ALLOWED_ORIGINS = config(
 )
 
 # Ollama (local AI): one place to configure it
-OLLAMA_URL = config('OLLAMA_URL', default='http://localhost:11434/api/generate')
-OLLAMA_MODEL = config('OLLAMA_MODEL', default='llama3.2:latest')
-OLLAMA_TIMEOUT = config('OLLAMA_TIMEOUT', default=120, cast=int)
+OLLAMA_URL = config(
+    'OLLAMA_URL',
+    default='http://127.0.0.1:11434/api/generate'
+)
+
+OLLAMA_MODEL = config(
+    'OLLAMA_MODEL',
+    default='llama3.2:latest'
+)
