@@ -426,6 +426,10 @@ export const getAdminUsers = async ({ role, q } = {}) => {
   return request(`/admin/users/${query ? `?${query}` : ""}`);
 };
 
+// All candidate accounts (reuses the admin users endpoint)
+export const getAdminCandidates = async (q) =>
+  getAdminUsers({ role: "candidate", q });
+
 // All companies (pending and approved)
 export const getAdminCompanies = async () =>
   request("/companies/");
