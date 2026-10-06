@@ -1,4 +1,14 @@
+import { useNavigate } from "react-router-dom";
+
 function CTA() {
+  const navigate = useNavigate();
+
+  const handleContactUs = () => {
+    document.getElementById("contact")?.scrollIntoView({
+      behavior: "smooth",
+    });
+  };
+
   return (
     <section className="py-24 bg-gradient-to-r from-purple-600 to-pink-600">
       <div className="max-w-5xl mx-auto px-6 text-center">
@@ -15,11 +25,19 @@ function CTA() {
 
         <div className="mt-10 flex flex-col sm:flex-row justify-center gap-5">
 
-          <button className="bg-white text-purple-600 px-8 py-4 rounded-xl font-bold text-lg hover:bg-purple-50 transition duration-300 shadow-lg">
+          {/* Get Started */}
+          <button
+            onClick={() => navigate("/register")}
+            className="bg-white text-purple-600 px-8 py-4 rounded-xl font-bold text-lg hover:bg-purple-50 transition duration-300 shadow-lg"
+          >
             Get Started
           </button>
 
-          <button className="border-2 border-white text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-white hover:text-purple-600 transition duration-300">
+          {/* Contact Us */}
+          <button
+            onClick={handleContactUs}
+            className="border-2 border-white text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-white hover:text-purple-600 transition duration-300"
+          >
             Contact Us
           </button>
 

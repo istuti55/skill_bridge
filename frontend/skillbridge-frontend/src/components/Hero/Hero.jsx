@@ -1,7 +1,16 @@
 import heroImage from "../../assets/images/hero.svg";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 function Hero() {
+  const navigate = useNavigate();
+
+  const handleLearnMore = () => {
+    document.getElementById("about")?.scrollIntoView({
+      behavior: "smooth",
+    });
+  };
+
   return (
     <section className="bg-gradient-to-br from-purple-50 via-pink-50 to-white min-h-screen flex items-center pb-20">
       <div className="max-w-7xl mx-auto px-6 lg:px-10 grid md:grid-cols-2 gap-12 items-center">
@@ -28,11 +37,19 @@ function Hero() {
           </p>
 
           <div className="mt-8 flex flex-wrap gap-4">
-            <button className="bg-purple-600 hover:bg-pink-600 text-white px-7 py-3 rounded-xl font-semibold shadow-lg hover:scale-105 transition-all duration-300">
+            {/* Get Started */}
+            <button
+              onClick={() => navigate("/register")}
+              className="bg-purple-600 hover:bg-pink-600 text-white px-7 py-3 rounded-xl font-semibold shadow-lg hover:scale-105 transition-all duration-300"
+            >
               Get Started
             </button>
 
-            <button className="border-2 border-purple-600 text-purple-600 hover:bg-purple-50 px-7 py-3 rounded-xl font-semibold hover:scale-105 transition-all duration-300">
+            {/* Learn More */}
+            <button
+              onClick={handleLearnMore}
+              className="border-2 border-purple-600 text-purple-600 hover:bg-purple-50 px-7 py-3 rounded-xl font-semibold hover:scale-105 transition-all duration-300"
+            >
               Learn More
             </button>
           </div>
