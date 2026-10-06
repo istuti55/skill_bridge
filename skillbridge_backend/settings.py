@@ -143,5 +143,12 @@ CORS_ALLOWED_ORIGINS = config(
 )
 
 # Ollama (local AI): one place to configure it
-OLLAMA_URL = config('OLLAMA_URL', default='http://localhost:11434/api/generate')
-OLLAMA_MODEL = config('OLLAMA_MODEL', default='llama3')
+OLLAMA_URL = config(
+    'OLLAMA_URL',
+    default='http://127.0.0.1:11434/api/generate'
+)
+
+OLLAMA_MODEL = config(
+    'OLLAMA_MODEL',
+    default='llama3.2:latest'
+)

@@ -5,7 +5,7 @@ DEFAULT_MODEL = "llama3.2:latest"
 
 OLLAMA_HOST = "http://127.0.0.1:11434"
 
-OLLAMA_TIMEOUT = 120.0
+OLLAMA_TIMEOUT = 300.0
 
 
 client = Client(

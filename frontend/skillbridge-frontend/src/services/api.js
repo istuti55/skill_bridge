@@ -1,7 +1,12 @@
 const API_BASE_URL = "http://127.0.0.1:8000/api";
 
 const getAccessToken = () => {
-  return localStorage.getItem("access_token");
+  const token = localStorage.getItem("access_token");
+
+  console.log("ACCESS TOKEN EXISTS:", !!token);
+  console.log("TOKEN LENGTH:", token ? token.length : 0);
+
+  return token;
 };
 
 const request = async (endpoint, options = {}) => {
@@ -11,12 +16,14 @@ const request = async (endpoint, options = {}) => {
     ...(options.headers || {}),
   };
 
-  if (token) {
+  // Send JWT only when authentication is required.
+  // Register and Login use skipAuth: true.
+  if (token && !options.skipAuth) {
     headers.Authorization = `Bearer ${token}`;
   }
 
   // Don't set Content-Type for FormData.
-  // Browser will automatically set multipart/form-data boundary.
+  // Browser automatically sets multipart/form-data boundary.
   if (!(options.body instanceof FormData)) {
     headers["Content-Type"] = "application/json";
   }
@@ -29,10 +36,13 @@ const request = async (endpoint, options = {}) => {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
+    console.log("Backend error:", data);
+
     throw new Error(
       data.detail ||
         data.message ||
         data.error ||
+        JSON.stringify(data) ||
         "Something went wrong"
     );
   }
@@ -46,6 +56,7 @@ export const registerUser = async (userData) => {
   return request("/register/", {
     method: "POST",
     body: JSON.stringify(userData),
+    skipAuth: true,
   });
 };
 
@@ -56,16 +67,20 @@ export const loginUser = async (email, password) => {
       email,
       password,
     }),
+    skipAuth: true,
   });
 
+  // Save access token
   if (data.access) {
     localStorage.setItem("access_token", data.access);
   }
 
+  // Save refresh token
   if (data.refresh) {
     localStorage.setItem("refresh_token", data.refresh);
   }
 
+  // Save user information
   if (data.user) {
     localStorage.setItem("user", JSON.stringify(data.user));
   }
@@ -89,6 +104,7 @@ export const getMyProfile = async () => {
 
 export const uploadResume = async (file) => {
   const formData = new FormData();
+
   formData.append("cv_file", file);
 
   return request("/candidates/upload-cv/", {

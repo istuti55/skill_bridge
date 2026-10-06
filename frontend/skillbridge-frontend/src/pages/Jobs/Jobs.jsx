@@ -1,70 +1,46 @@
-import { useState } from "react";
+
+import { useEffect, useState } from "react";
 import { Briefcase } from "lucide-react";
 import { motion } from "framer-motion";
 
 import Sidebar from "../../components/Dashboard/Sidebar/Sidebar";
 import Topbar from "../../components/Dashboard/Topbar/Topbar";
 import JobCard from "../../components/Dashboard/JobCard/JobCard";
+import { getJobs } from "../../services/api";
 
 function Jobs() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const jobs = [
-    {
-      company: "TechNova",
-      title: "Frontend Developer",
-      location: "Kathmandu, Nepal",
-      salary: "NPR 50,000 - 80,000",
-      type: "Full-time",
-      match: 95,
-      logo: "🚀",
-    },
-    {
-      company: "CloudTech Nepal",
-      title: "Full Stack Developer",
-      location: "Kathmandu, Nepal",
-      salary: "NPR 60,000 - 100,000",
-      type: "Full-time",
-      match: 92,
-      logo: "☁️",
-    },
-    {
-      company: "DataMind",
-      title: "Machine Learning Engineer",
-      location: "Remote",
-      salary: "NPR 70,000 - 110,000",
-      type: "Full-time",
-      match: 89,
-      logo: "🤖",
-    },
-    {
-      company: "WebWorks",
-      title: "React Developer",
-      location: "Lalitpur, Nepal",
-      salary: "NPR 45,000 - 75,000",
-      type: "Full-time",
-      match: 87,
-      logo: "💻",
-    },
-    {
-      company: "Innovate Nepal",
-      title: "Python Developer",
-      location: "Pokhara, Nepal",
-      salary: "NPR 50,000 - 85,000",
-      type: "Full-time",
-      match: 84,
-      logo: "🐍",
-    },
-    {
-      company: "Digital Solutions",
-      title: "Software Engineer",
-      location: "Remote",
-      salary: "NPR 65,000 - 100,000",
-      type: "Full-time",
-      match: 81,
-      logo: "⚡",
-    },
-  ];
+  useEffect(() => {
+    const loadJobs = async () => {
+      try {
+        const data = await getJobs();
+
+        console.log(
+          "REAL JOBS DATA:",
+          JSON.stringify(data, null, 2)
+        );
+
+        setJobs(
+          Array.isArray(data)
+            ? data
+            : data.results || []
+        );
+      } catch (err) {
+        console.error("Failed to load jobs:", err);
+        setError(
+          err.message || "Failed to load jobs."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadJobs();
+  }, []);
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -125,12 +101,45 @@ function Jobs() {
 
           </div>
 
+          {/* Loading */}
+          {loading && (
+            <p className="text-gray-500 mb-6">
+              Loading jobs...
+            </p>
+          )}
+
+          {/* Error */}
+          {error && (
+            <p className="text-red-500 mb-6">
+              {error}
+            </p>
+          )}
+
+          {/* Empty State */}
+          {!loading && !error && jobs.length === 0 && (
+            <div className="bg-white rounded-2xl p-8 text-center">
+              <Briefcase
+                size={40}
+                className="mx-auto text-gray-400 mb-3"
+              />
+
+              <h3 className="text-lg font-semibold text-gray-700">
+                No jobs available
+              </h3>
+
+              <p className="text-gray-500 text-sm mt-1">
+                Check back later for new opportunities.
+              </p>
+            </div>
+          )}
+
           {/* Job Cards */}
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
 
             {jobs.map((job, index) => (
+
               <motion.div
-                key={job.company + job.title}
+                key={job.id}
                 initial={{ opacity: 0, y: 25 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{
@@ -138,16 +147,44 @@ function Jobs() {
                   delay: index * 0.08,
                 }}
               >
+
                 <JobCard
-                  company={job.company}
-                  title={job.title}
-                  location={job.location}
-                  salary={job.salary}
-                  type={job.type}
-                  match={job.match}
-                  logo={job.logo}
+                  company={job.company_name || "Company"}
+                  title={job.title || "Job Opportunity"}
+
+                  location={
+                    job.location || "Location not specified"
+                  }
+
+                  salary={
+                    job.salary || "Salary not specified"
+                  }
+
+                  type={
+                    job.type || "Full-time"
+                  }
+
+                  match={
+                    job.match ?? null
+                  }
+
+                  logo={
+                    job.logo || "💼"
+                  }
+
+                  description={
+                    job.description || ""
+                  }
+
+                  requiredSkills={
+                    job.required_skills || []
+                  }
+
+                  jobId={job.id}
                 />
+
               </motion.div>
+
             ))}
 
           </div>
@@ -161,3 +198,4 @@ function Jobs() {
 }
 
 export default Jobs;
+

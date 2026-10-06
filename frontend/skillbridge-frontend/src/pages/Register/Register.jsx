@@ -31,9 +31,10 @@ function Register() {
 
     try {
       await registerUser({
-        fullName: data.fullName,
+        name: data.fullName,
         email: data.email,
         password: data.password,
+        role: "candidate",
       });
 
       toast.success("Registration Successful 🎉", {
