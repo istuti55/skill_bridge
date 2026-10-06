@@ -135,6 +135,8 @@ function CompanyDashboard() {
     );
   }
 
+  const companyApproved = dashboard.company_approved === true;
+
   const totalApplicants = dashboard.applications_total || 0;
 
   const activeJobs =
@@ -214,13 +216,6 @@ function CompanyDashboard() {
               </p>
             </div>
 
-            <Link
-              to="/company/jobs"
-              className="inline-flex w-fit items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-purple-700 shadow-lg transition hover:bg-pink-50"
-            >
-              <Plus size={18} />
-              Create Job
-            </Link>
           </div>
         </section>
 
@@ -298,80 +293,146 @@ function CompanyDashboard() {
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
 
-            <Link
-              to="/company/jobs"
-              className="group rounded-2xl border border-pink-100 bg-white p-5 shadow-[0_4px_20px_rgba(88,28,135,0.04)] transition hover:border-pink-200 hover:shadow-lg"
-            >
-              <div className="flex items-center justify-between">
-                <div className="rounded-xl bg-pink-50 p-3">
-                  <Plus className="text-pink-600" size={21} />
+            {companyApproved ? (
+              <Link
+                to="/company/jobs"
+                className="group rounded-2xl border border-pink-100 bg-white p-5 shadow-[0_4px_20px_rgba(88,28,135,0.04)] transition hover:border-pink-200 hover:shadow-lg"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="rounded-xl bg-pink-50 p-3">
+                    <Plus className="text-pink-600" size={21} />
+                  </div>
+
+                  <ChevronRight
+                    size={18}
+                    className="text-gray-300 transition group-hover:translate-x-1 group-hover:text-pink-500"
+                  />
                 </div>
 
-                <ChevronRight
-                  size={18}
-                  className="text-gray-300 transition group-hover:translate-x-1 group-hover:text-pink-500"
-                />
-              </div>
+                <h3 className="mt-4 font-bold text-gray-800">
+                  Manage Jobs
+                </h3>
 
-              <h3 className="mt-4 font-bold text-gray-800">
-                Manage Jobs
-              </h3>
-
-              <p className="mt-1 text-sm text-gray-500">
-                Create, edit and manage job openings.
-              </p>
-            </Link>
-
-            <Link
-              to="/company/applicants"
-              className="group rounded-2xl border border-purple-100 bg-white p-5 shadow-[0_4px_20px_rgba(88,28,135,0.04)] transition hover:border-purple-200 hover:shadow-lg"
-            >
-              <div className="flex items-center justify-between">
-                <div className="rounded-xl bg-purple-50 p-3">
-                  <Users className="text-purple-600" size={21} />
+                <p className="mt-1 text-sm text-gray-500">
+                  Create, edit and manage job openings.
+                </p>
+              </Link>
+            ) : (
+              <div
+                className="cursor-not-allowed rounded-2xl border border-gray-100 bg-gray-50 p-5 opacity-70"
+                title="Available after company approval"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="rounded-xl bg-gray-100 p-3">
+                    <Plus className="text-gray-400" size={21} />
+                  </div>
+                  <span className="text-lg">??</span>
                 </div>
 
-                <ChevronRight
-                  size={18}
-                  className="text-gray-300 transition group-hover:translate-x-1 group-hover:text-purple-500"
-                />
+                <h3 className="mt-4 font-bold text-gray-500">
+                  Manage Jobs
+                </h3>
+
+                <p className="mt-1 text-sm text-gray-400">
+                  Available after company approval.
+                </p>
               </div>
+            )}
 
-              <h3 className="mt-4 font-bold text-gray-800">
-                Review Applicants
-              </h3>
+            {companyApproved ? (
+              <Link
+                to="/company/applicants"
+                className="group rounded-2xl border border-purple-100 bg-white p-5 shadow-[0_4px_20px_rgba(88,28,135,0.04)] transition hover:border-purple-200 hover:shadow-lg"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="rounded-xl bg-purple-50 p-3">
+                    <Users className="text-purple-600" size={21} />
+                  </div>
 
-              <p className="mt-1 text-sm text-gray-500">
-                Compare candidates and match scores.
-              </p>
-            </Link>
-
-            <Link
-              to="/company/applicants"
-              className="group rounded-2xl border border-pink-100 bg-white p-5 shadow-[0_4px_20px_rgba(88,28,135,0.04)] transition hover:border-pink-200 hover:shadow-lg"
-            >
-              <div className="flex items-center justify-between">
-                <div className="rounded-xl bg-pink-50 p-3">
-                  <CalendarDays className="text-pink-600" size={21} />
+                  <ChevronRight
+                    size={18}
+                    className="text-gray-300 transition group-hover:translate-x-1 group-hover:text-purple-500"
+                  />
                 </div>
 
-                <ChevronRight
-                  size={18}
-                  className="text-gray-300 transition group-hover:translate-x-1 group-hover:text-pink-500"
-                />
+                <h3 className="mt-4 font-bold text-gray-800">
+                  Review Applicants
+                </h3>
+
+                <p className="mt-1 text-sm text-gray-500">
+                  Compare candidates and match scores.
+                </p>
+              </Link>
+            ) : (
+              <div
+                className="cursor-not-allowed rounded-2xl border border-gray-100 bg-gray-50 p-5 opacity-70"
+                title="Available after company approval"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="rounded-xl bg-gray-100 p-3">
+                    <Users className="text-gray-400" size={21} />
+                  </div>
+                  <span className="text-lg">??</span>
+                </div>
+
+                <h3 className="mt-4 font-bold text-gray-500">
+                  Review Applicants
+                </h3>
+
+                <p className="mt-1 text-sm text-gray-400">
+                  Available after company approval.
+                </p>
               </div>
+            )}
 
-              <h3 className="mt-4 font-bold text-gray-800">
-                Recruitment
-              </h3>
+            {companyApproved ? (
+              <Link
+                to="/company/applicants"
+                className="group rounded-2xl border border-pink-100 bg-white p-5 shadow-[0_4px_20px_rgba(88,28,135,0.04)] transition hover:border-pink-200 hover:shadow-lg"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="rounded-xl bg-pink-50 p-3">
+                    <CalendarDays className="text-pink-600" size={21} />
+                  </div>
 
-              <p className="mt-1 text-sm text-gray-500">
-                Manage interviews and hiring stages.
-              </p>
-            </Link>
+                  <ChevronRight
+                    size={18}
+                    className="text-gray-300 transition group-hover:translate-x-1 group-hover:text-pink-500"
+                  />
+                </div>
+
+                <h3 className="mt-4 font-bold text-gray-800">
+                  Recruitment
+                </h3>
+
+                <p className="mt-1 text-sm text-gray-500">
+                  Manage interviews and hiring stages.
+                </p>
+              </Link>
+            ) : (
+              <div
+                className="cursor-not-allowed rounded-2xl border border-gray-100 bg-gray-50 p-5 opacity-70"
+                title="Available after company approval"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="rounded-xl bg-gray-100 p-3">
+                    <CalendarDays className="text-gray-400" size={21} />
+                  </div>
+                  <span className="text-lg">??</span>
+                </div>
+
+                <h3 className="mt-4 font-bold text-gray-500">
+                  Recruitment
+                </h3>
+
+                <p className="mt-1 text-sm text-gray-400">
+                  Available after company approval.
+                </p>
+              </div>
+            )}
+
           </div>
         </section>
-
         {/* =====================================================
             MAIN CONTENT
         ====================================================== */}
@@ -703,3 +764,7 @@ function CompanyDashboard() {
 }
 
 export default CompanyDashboard;
+
+
+
+
