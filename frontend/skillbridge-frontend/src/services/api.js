@@ -145,6 +145,12 @@ export const getMyApplications = async () => {
   return request("/applications/mine/");
 };
 
+// ==================== CANDIDATE DASHBOARD ====================
+
+export const getCandidateDashboard = async () => {
+  return request("/dashboard/candidate/");
+};
+
 // ==================== NOTIFICATIONS ====================
 
 export const getNotifications = async () => {

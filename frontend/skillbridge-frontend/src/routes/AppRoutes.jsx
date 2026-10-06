@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+﻿import { Routes, Route } from "react-router-dom";
 
 import Home from "../pages/Home/Home";
 import Login from "../pages/Login/Login";
@@ -12,6 +12,7 @@ import AIAnalysis from "../pages/AIAnalysis/AIAnalysis";
 import Jobs from "../pages/Jobs/Jobs";
 import Interviews from "../pages/Interviews/Interviews";
 import Profile from "../pages/Profile/Profile";
+import Applications from "../pages/Applications/Applications";
 
 function AppRoutes() {
   return (
@@ -31,6 +32,7 @@ function AppRoutes() {
       <Route path="/resume" element={<Resume />} />
       <Route path="/ai-analysis" element={<AIAnalysis />} />
       <Route path="/jobs" element={<Jobs />} />
+      <Route path="/applications" element={<Applications />} />
       <Route path="/interviews" element={<Interviews />} />
       <Route path="/profile" element={<Profile />} />
     </Routes>

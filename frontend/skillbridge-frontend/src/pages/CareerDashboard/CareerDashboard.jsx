@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 import Sidebar from "../../components/Dashboard/Sidebar/Sidebar";
 import Topbar from "../../components/Dashboard/Topbar/Topbar";
 import DashboardCard from "../../components/Dashboard/DashboardCard/DashboardCard";
@@ -11,7 +13,6 @@ import RecentActivity from "../../components/Dashboard/RecentActivity/RecentActi
 import SkillGapAnalysis from "../../components/Dashboard/SkillGapAnalysis/SkillGapAnalysis";
 import LearningRoadmap from "../../components/Dashboard/LearningRoadmap/LearningRoadmap";
 
-import { useState } from "react";
 import { motion } from "framer-motion";
 
 import {
@@ -21,10 +22,47 @@ import {
   Star,
 } from "lucide-react";
 
-function CareerDashboard() {
-  const [analysisComplete, setAnalysisComplete] = useState(false);
+import { getCandidateDashboard } from "../../services/api";
 
+function CareerDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const [dashboardData, setDashboardData] = useState(null);
+
+  const [dashboardLoading, setDashboardLoading] = useState(true);
+
+  const [dashboardError, setDashboardError] = useState("");
+
+  // Load real candidate dashboard data
+  useEffect(() => {
+    const loadDashboard = async () => {
+      try {
+        const data = await getCandidateDashboard();
+
+        console.log(
+          "CANDIDATE DASHBOARD DATA:",
+          JSON.stringify(data, null, 2)
+        );
+
+        setDashboardData(data);
+      } catch (err) {
+        console.error(
+          "Failed to load candidate dashboard:",
+          err
+        );
+
+        setDashboardError(
+          err.message ||
+            "Failed to load dashboard data."
+        );
+      } finally {
+        setDashboardLoading(false);
+      }
+    };
+
+    loadDashboard();
+  }, []);
+
   // Animation for individual dashboard cards
   const cardVariants = {
     hidden: {
@@ -35,19 +73,6 @@ function CareerDashboard() {
     visible: {
       opacity: 1,
       y: 0,
-    },
-  };
-
-  const sectionVariants = {
-    hidden: {
-      opacity: 0,
-      y: 60,
-      scale: 0.98,
-    },
-    visible: {
-      opacity: 1,
-      y: 0,
-      scale: 1,
     },
   };
 
@@ -65,6 +90,7 @@ function CareerDashboard() {
 
         {/* Mobile Header */}
         <div className="lg:hidden flex items-center justify-between px-5 py-4 bg-white border-b">
+
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
@@ -89,6 +115,7 @@ function CareerDashboard() {
           </h1>
 
           <div className="w-10" />
+
         </div>
 
         {/* Topbar */}
@@ -100,9 +127,17 @@ function CareerDashboard() {
           {/* Page Heading */}
           <motion.div
             className="mb-8"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+            initial={{
+              opacity: 0,
+              y: -20,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            transition={{
+              duration: 0.5,
+            }}
           >
             <h1 className="text-3xl sm:text-4xl font-bold text-gray-800">
               Career Dashboard
@@ -112,6 +147,13 @@ function CareerDashboard() {
               Monitor your career journey with AI-powered insights.
             </p>
           </motion.div>
+
+          {/* Dashboard Error */}
+          {dashboardError && (
+            <div className="mb-6 bg-red-50 border border-red-200 text-red-600 rounded-xl p-4">
+              {dashboardError}
+            </div>
+          )}
 
           {/* Dashboard Cards */}
           <motion.div
@@ -136,24 +178,44 @@ function CareerDashboard() {
             >
               <DashboardCard
                 title="Resume Score"
-                value="92%"
-                subtitle="Excellent Resume"
-                trend="▲ +8% from last analysis"
+                value={
+                  dashboardLoading
+                    ? "..."
+                    : `${dashboardData?.resume_score ?? 0}%`
+                }
+                subtitle="Resume Score"
+                trend={
+                  dashboardLoading
+                    ? "Loading..."
+                    : dashboardData?.resume_score >= 80
+                    ? "Excellent Resume"
+                    : "Needs Improvement"
+                }
                 icon={<FileText size={30} />}
                 color="#2563eb"
               />
             </motion.div>
 
-            {/* AI Analysis */}
+            {/* AI Analysis / Job Readiness */}
             <motion.div
               variants={cardVariants}
               transition={{ duration: 0.4 }}
             >
               <DashboardCard
                 title="AI Analysis"
-                value="88%"
-                subtitle="Profile Strength"
-                trend="▲ Strong Match"
+                value={
+                  dashboardLoading
+                    ? "..."
+                    : `${dashboardData?.job_readiness ?? 0}%`
+                }
+                subtitle="Job Readiness"
+                trend={
+                  dashboardLoading
+                    ? "Loading..."
+                    : dashboardData?.job_readiness >= 80
+                    ? "Strong Match"
+                    : "Keep Improving"
+                }
                 icon={<Brain size={30} />}
                 color="#7c3aed"
               />
@@ -166,9 +228,17 @@ function CareerDashboard() {
             >
               <DashboardCard
                 title="Jobs Matched"
-                value="24"
+                value={
+                  dashboardLoading
+                    ? "..."
+                    : dashboardData?.matched_jobs_count ?? 0
+                }
                 subtitle="Recommended Jobs"
-                trend="+5 New Today"
+                trend={
+                  dashboardLoading
+                    ? "Loading..."
+                    : "Based on your profile"
+                }
                 icon={<Briefcase size={30} />}
                 color="#16a34a"
               />
@@ -181,9 +251,17 @@ function CareerDashboard() {
             >
               <DashboardCard
                 title="Skills"
-                value="14"
-                subtitle="Verified Skills"
-                trend="3 Need Improvement"
+                value={
+                  dashboardLoading
+                    ? "..."
+                    : dashboardData?.skills_total ?? 0
+                }
+                subtitle="Detected Skills"
+                trend={
+                  dashboardLoading
+                    ? "Loading..."
+                    : `${dashboardData?.skills_strong ?? 0} Strong Skills`
+                }
                 icon={<Star size={30} />}
                 color="#ea580c"
               />
@@ -194,96 +272,133 @@ function CareerDashboard() {
           {/* Resume Management */}
           <div className="mt-8">
 
-            <ResumeCard
-              onAnalysisComplete={() => setAnalysisComplete(true)}
-            />
+            <ResumeCard />
 
-            {/* Show remaining dashboard after AI analysis */}
-            {analysisComplete && (
-              <>
+            {/* Dashboard Details */}
+            <>
 
-                {/* First Row */}
-                <motion.div
-                  className="grid grid-cols-1 xl:grid-cols-3 gap-8 mt-8"
-                  initial={{ opacity: 0, y: 60 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.2 }}
-                  transition={{
-                    duration: 0.8,
-                    ease: "easeOut",
-                  }}
-                >
-                
-                  {/* AI Analysis */}
-                  <div className="xl:col-span-2">
-                    <AIAnalysisCard
-                      score={92}
-                      strengths={[
-                        "ATS Friendly",
-                        "Strong Technical Skills",
-                      ]}
-                      improvements={[
-                        "Improve Professional Summary",
-                        "Add More Projects",
-                      ]}                   
-                    />
-                  </div>
+              {/* First Row */}
+              <motion.div
+                className="grid grid-cols-1 xl:grid-cols-3 gap-8 mt-8"
+                initial={{
+                  opacity: 0,
+                  y: 60,
+                }}
+                whileInView={{
+                  opacity: 1,
+                  y: 0,
+                }}
+                viewport={{
+                  once: true,
+                  amount: 0.2,
+                }}
+                transition={{
+                  duration: 0.8,
+                  ease: "easeOut",
+                }}
+              >
 
-                  {/* Recent Activity */}
-                  <RecentActivity />
-                </motion.div>
+                {/* AI Analysis */}
+                <div className="xl:col-span-2">
+                  <AIAnalysisCard
+                    score={
+                      dashboardData?.resume_score ?? 0
+                    }
+                    strengths={[
+                      "ATS Friendly",
+                      "Strong Technical Skills",
+                    ]}
+                    improvements={[
+                      "Improve Professional Summary",
+                      "Add More Projects",
+                    ]}
+                  />
+                </div>
 
-                {/* Second Row */}
-                <motion.div
-                  className="grid grid-cols-1 xl:grid-cols-2 gap-8 mt-8"
-                  initial={{ opacity: 0, y: 60 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.2 }}
-                  transition={{
-                    duration: 0.8,
-                    ease: "easeOut",
-                 }}
-                >
-                  <RecommendedJobs />
+                {/* Recent Activity */}
+                <RecentActivity />
 
-                  <CareerProgress />
-                </motion.div>
+              </motion.div>
 
-                {/* Third Row */}
-                <motion.div
-                  initial={{ opacity: 0, y: 60 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.2 }}
-                  transition={{
-                    duration: 0.8,
-                    ease: "easeOut",
-                  }}
-                >
-                  <UpcomingInterviews />
-                </motion.div>
+              {/* Second Row */}
+              <motion.div
+                className="grid grid-cols-1 xl:grid-cols-2 gap-8 mt-8"
+                initial={{
+                  opacity: 0,
+                  y: 60,
+                }}
+                whileInView={{
+                  opacity: 1,
+                  y: 0,
+                }}
+                viewport={{
+                  once: true,
+                  amount: 0.2,
+                }}
+                transition={{
+                  duration: 0.8,
+                  ease: "easeOut",
+                }}
+              >
 
-                {/* Skill Gap Analysis */}
-                <motion.div
-                  className="mt-8"
-                  initial={{ opacity: 0, y: 60 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.2 }}
-                  transition={{
-                    duration: 0.8,
-                    ease: "easeOut",
-                  }}
-                >
-                  {/* Skill Gap Analysis */}
-                  <div className="mt-8">
-                    <SkillGapAnalysis />
-                  </div>
+                <RecommendedJobs />
 
-                  {/* Learning Roadmap */}
-                  <LearningRoadmap />
-                </motion.div>
+                <CareerProgress />
 
-              </>
-            )}
+              </motion.div>
+
+              {/* Third Row */}
+              <motion.div
+                initial={{
+                  opacity: 0,
+                  y: 60,
+                }}
+                whileInView={{
+                  opacity: 1,
+                  y: 0,
+                }}
+                viewport={{
+                  once: true,
+                  amount: 0.2,
+                }}
+                transition={{
+                  duration: 0.8,
+                  ease: "easeOut",
+                }}
+              >
+                <UpcomingInterviews />
+              </motion.div>
+
+              {/* Skill Gap Analysis */}
+              <motion.div
+                className="mt-8"
+                initial={{
+                  opacity: 0,
+                  y: 60,
+                }}
+                whileInView={{
+                  opacity: 1,
+                  y: 0,
+                }}
+                viewport={{
+                  once: true,
+                  amount: 0.2,
+                }}
+                transition={{
+                  duration: 0.8,
+                  ease: "easeOut",
+                }}
+              >
+
+                <SkillGapAnalysis
+                  jobId={dashboardData?.top_matches?.[0]?.job_id}
+                />
+
+                <LearningRoadmap />
+
+              </motion.div>
+
+            </>
 
           </div>
 

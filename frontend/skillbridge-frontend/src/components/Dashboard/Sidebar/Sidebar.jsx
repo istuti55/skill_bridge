@@ -1,9 +1,10 @@
-import { NavLink } from "react-router-dom";
+﻿import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
   FileText,
   Brain,
   Briefcase,
+  ClipboardList,
   CalendarDays,
   User,
   LogOut,
@@ -31,6 +32,11 @@ function Sidebar({ isOpen, setIsOpen }) {
       icon: <Briefcase size={20} />,
       title: "Jobs",
       path: "/jobs",
+    },
+    {
+      icon: <ClipboardList size={20} />,
+      title: "Applications",
+      path: "/applications",
     },
     {
       icon: <CalendarDays size={20} />,
