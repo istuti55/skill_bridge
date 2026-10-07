@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+﻿import { Routes, Route, Navigate } from "react-router-dom";
 
 import Home from "../pages/Home/Home";
 import Login from "../pages/Login/Login";
@@ -23,30 +23,32 @@ import ProtectedRoute from "./ProtectedRoute";
 function AppRoutes() {
   return (
     <Routes>
-      {/* Main Pages */}
+      {/* Public pages */}
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
 
-      {/* Candidate Dashboards */}
-      <Route path="/career" element={<CareerDashboard />} />
-      <Route path="/dashboard" element={<CareerDashboard />} />
+      {/* Candidate only */}
+      <Route element={<ProtectedRoute role="candidate" />}>
+        <Route path="/career" element={<CareerDashboard />} />
+        <Route path="/dashboard" element={<CareerDashboard />} />
+        <Route path="/resume" element={<Resume />} />
+        <Route path="/ai-analysis" element={<AIAnalysis />} />
+        <Route path="/jobs" element={<Jobs />} />
+        <Route path="/applications" element={<Applications />} />
+        <Route path="/interviews" element={<Interviews />} />
+        <Route path="/profile" element={<Profile />} />
+      </Route>
 
-      {/* Company Dashboard */}
-      <Route path="/company" element={<CompanyDashboard />} />
-      <Route path="/company/jobs" element={<CompanyJobs />} />
-      <Route path="/company/applicants" element={<CompanyApplicants />} />
+      {/* Company only */}
+      <Route element={<ProtectedRoute role="company" />}>
+        <Route path="/company" element={<CompanyDashboard />} />
+        <Route path="/company/jobs" element={<CompanyJobs />} />
+        <Route path="/company/applicants" element={<CompanyApplicants />} />
+      </Route>
 
-      {/* Candidate Pages */}
-      <Route path="/resume" element={<Resume />} />
-      <Route path="/ai-analysis" element={<AIAnalysis />} />
-      <Route path="/jobs" element={<Jobs />} />
-      <Route path="/applications" element={<Applications />} />
-      <Route path="/interviews" element={<Interviews />} />
-      <Route path="/profile" element={<Profile />} />
-
-      {/* Admin */}
+      {/* Admin only */}
       <Route element={<ProtectedRoute role="admin" />}>
         <Route path="/admin" element={<AdminDashboard />} />
       </Route>

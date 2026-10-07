@@ -235,6 +235,28 @@ export const logoutUser = () => {
 export const getMyProfile = async () =>
   request("/candidates/me/");
 
+export const updateMyProfile = async (data) => {
+  const updated = await request("/candidates/me/", {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+
+  // Keep the stored user in sync (Sidebar/Topbar read from it)
+  const stored = getStoredUser();
+  if (stored) {
+    localStorage.setItem(
+      USER_KEY,
+      JSON.stringify({
+        ...stored,
+        name: updated.name,
+        email: updated.email,
+      })
+    );
+  }
+
+  return updated;
+};
+
 // ==================== RESUME ====================
 
 export const uploadResume = async (file) => {
