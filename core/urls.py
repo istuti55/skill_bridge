@@ -1,5 +1,6 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
+from .review_views import ReviewCreateView, FlaggedListView, ModerateView
 from .views import (
     RegisterView, LoginView, CVUploadView,
     JobApproveView,
@@ -55,4 +56,8 @@ urlpatterns = [
 
     path('notifications/', NotificationListView.as_view(), name='notifications'),
     path('notifications/<int:pk>/read/', NotificationReadView.as_view(), name='notification-read'),
+
+    path('reviews/', ReviewCreateView.as_view(), name='review-create'),
+    path('admin/flagged/', FlaggedListView.as_view(), name='admin-flagged'),
+    path('admin/flagged/<int:pk>/', ModerateView.as_view(), name='admin-moderate'),
 ]

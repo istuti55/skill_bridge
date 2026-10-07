@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .matching_service import run_bulk_match
 from .models import Company, Job, Notification
 from .permissions import IsCompany, IsAdmin
 from .serializers import CompanySerializer, JobSerializer
@@ -71,7 +72,9 @@ class CompanyApproveView(APIView):
 
 
 # ---------------------------------------------------------------
-# Jobs: list + create (company must be approved to post)
+# Jobs: list + create
+# New companies and new jobs go live right away.
+# The admin only steps in when a company is flagged by bad reviews.
 # ---------------------------------------------------------------
 
 class JobListCreateView(generics.ListCreateAPIView):
@@ -89,7 +92,10 @@ class JobListCreateView(generics.ListCreateAPIView):
             return Job.objects.all().order_by('-posted_date')
         if user.role == 'company':
             return Job.objects.filter(company__user=user).order_by('-posted_date')
-        return Job.objects.filter(status='approved').order_by('-posted_date')
+        # Candidates: only live jobs of companies that are not suspended
+        return Job.objects.filter(
+            status='approved', company__user__is_active=True
+        ).order_by('-posted_date')
 
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
@@ -117,7 +123,8 @@ class JobListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         company = get_object_or_404(Company, user=self.request.user)
-        serializer.save(company=company)
+        job = serializer.save(company=company, status='approved')
+        run_bulk_match(job)  # match all candidates right away
 
 
 # ---------------------------------------------------------------
@@ -164,13 +171,10 @@ class JobDetailView(APIView):
         serializer = JobSerializer(job, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
 
-        # An edited job must be reviewed again by the admin
-        if job.status in ('approved', 'rejected'):
-            serializer.save(status='pending')
-        else:
-            serializer.save()
+        job = serializer.save(status='approved')
+        run_bulk_match(job)  # skills may have changed, so match again
 
-        return Response(serializer.data)
+        return Response(JobSerializer(job).data)
 
     def delete(self, request, pk):
         job = self._own_job(request, pk)

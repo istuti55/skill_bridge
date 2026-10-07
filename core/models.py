@@ -164,3 +164,38 @@ class JobMatch(models.Model):
 
     def __str__(self):
         return f"{self.candidate.user.name} ~ {self.job.title}: {self.match_score}"
+
+
+
+
+class Review(models.Model):
+    """A candidate reviews a company, or a company reviews a candidate."""
+    reviewer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews_given')
+    target = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews_received')
+    rating = models.SmallIntegerField()  # 1 to 5
+    comment = models.CharField(max_length=500, blank=True, default='')
+    reported = models.BooleanField(default=False)  # True if the reviewer also clicked Report
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('reviewer', 'target')  # one review per person
+
+    def __str__(self):
+        return f"{self.reviewer.name} -> {self.target.name}: {self.rating}"
+
+
+class ModerationAction(models.Model):
+    """What the admin decided about a flagged user."""
+    ACTION_CHOICES = [
+        ('dismiss', 'Dismiss'),
+        ('warn', 'Warn'),
+        ('suspend', 'Suspend'),
+    ]
+
+    target = models.ForeignKey(User, on_delete=models.CASCADE, related_name='moderation_actions')
+    action = models.CharField(max_length=10, choices=ACTION_CHOICES)
+    admin = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='moderation_done')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.action}: {self.target.name}"

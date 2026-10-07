@@ -43,7 +43,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         if user.role == 'candidate':
             Candidate.objects.create(user=user, cv_file_path='')
         elif user.role == 'company':
-            Company.objects.create(user=user, company_name=user.name)
+            Company.objects.create(user=user, company_name=user.name, approved=True)
 
         return user
 
