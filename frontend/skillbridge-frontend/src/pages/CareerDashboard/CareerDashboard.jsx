@@ -29,9 +29,11 @@ function CareerDashboard() {
 
   const [dashboardData, setDashboardData] = useState(null);
 
-  const [dashboardLoading, setDashboardLoading] = useState(true);
+  const [dashboardLoading, setDashboardLoading] =
+    useState(true);
 
-  const [dashboardError, setDashboardError] = useState("");
+  const [dashboardError, setDashboardError] =
+    useState("");
 
   // Load real candidate dashboard data
   useEffect(() => {
@@ -62,6 +64,16 @@ function CareerDashboard() {
 
     loadDashboard();
   }, []);
+
+  // Use the highest-ranked recommended job
+  // for all job-specific dashboard sections.
+  const recommendedJobId =
+    dashboardData?.top_matches?.[0]?.job_id;
+
+  console.log(
+    "RECOMMENDED JOB ID:",
+    recommendedJobId
+  );
 
   // Animation for individual dashboard cards
   const cardVariants = {
@@ -144,7 +156,8 @@ function CareerDashboard() {
             </h1>
 
             <p className="text-gray-500 mt-2">
-              Monitor your career journey with AI-powered insights.
+              Monitor your career journey with AI-powered
+              insights.
             </p>
           </motion.div>
 
@@ -341,9 +354,16 @@ function CareerDashboard() {
                 }}
               >
 
-                <RecommendedJobs />
+                <RecommendedJobs
+                  jobs={
+                    dashboardData?.top_matches || []
+                  }
+                />
 
-                <CareerProgress />
+                {/* Career Progress */}
+                <CareerProgress
+                  jobId={recommendedJobId}
+                />
 
               </motion.div>
 
@@ -369,7 +389,7 @@ function CareerDashboard() {
                 <UpcomingInterviews />
               </motion.div>
 
-              {/* Skill Gap Analysis */}
+              {/* Skill Gap Analysis + Learning Roadmap */}
               <motion.div
                 className="mt-8"
                 initial={{
@@ -391,10 +411,12 @@ function CareerDashboard() {
               >
 
                 <SkillGapAnalysis
-                  jobId={dashboardData?.top_matches?.[0]?.job_id}
+                  jobId={recommendedJobId}
                 />
 
-                <LearningRoadmap />
+                <LearningRoadmap
+                  jobId={recommendedJobId}
+                />
 
               </motion.div>
 

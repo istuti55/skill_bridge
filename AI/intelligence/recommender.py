@@ -9,13 +9,13 @@ ROLE_PROFILES = {
         "core": {
             "python",
             "sql",
-            "rest api"
+            "rest api",
         },
         "supporting": {
             "docker",
             "postgresql",
             "django",
-            "node.js"
+            "node.js",
         },
         "evidence_keywords": [
             "backend",
@@ -25,18 +25,18 @@ ROLE_PROFILES = {
             "microservices",
             "server",
             "database",
-            "scalable"
-        ]
+            "scalable",
+        ],
     },
 
     "Frontend Developer": {
         "core": {
             "javascript",
             "react",
-            "html5/css3"
+            "html5/css3",
         },
         "supporting": {
-            "typescript"
+            "typescript",
         },
         "evidence_keywords": [
             "frontend",
@@ -47,22 +47,22 @@ ROLE_PROFILES = {
             "react",
             "web interface",
             "ux",
-            "accessibility"
-        ]
+            "accessibility",
+        ],
     },
 
     "Full Stack Developer": {
         "core": {
             "javascript",
             "react",
-            "node.js"
+            "node.js",
         },
         "supporting": {
             "typescript",
             "python",
             "sql",
             "rest api",
-            "html5/css3"
+            "html5/css3",
         },
         "evidence_keywords": [
             "full stack",
@@ -72,18 +72,18 @@ ROLE_PROFILES = {
             "web application",
             "web applications",
             "database",
-            "scalable"
-        ]
+            "scalable",
+        ],
     },
 
     "Cloud Engineer": {
         "core": {
             "aws",
             "docker",
-            "ci/cd pipelines"
+            "ci/cd pipelines",
         },
         "supporting": {
-            "git"
+            "git",
         },
         "evidence_keywords": [
             "aws",
@@ -92,18 +92,18 @@ ROLE_PROFILES = {
             "cloud hosting",
             "deployment",
             "infrastructure",
-            "scalable"
-        ]
+            "scalable",
+        ],
     },
 
     "DevOps Engineer": {
         "core": {
             "docker",
             "ci/cd pipelines",
-            "git"
+            "git",
         },
         "supporting": {
-            "aws"
+            "aws",
         },
         "evidence_keywords": [
             "ci/cd",
@@ -113,9 +113,159 @@ ROLE_PROFILES = {
             "devops",
             "infrastructure",
             "docker",
-            "cloud"
-        ]
-    }
+            "cloud",
+        ],
+    },
+}
+
+
+# -------------------------------------------------
+# CAREER GROWTH PATHS
+# -------------------------------------------------
+#
+# These are NOT job requirements.
+#
+# They are used when the candidate already satisfies
+# the current job's required skills.
+#
+# They provide useful next-step learning directions.
+# -------------------------------------------------
+
+CAREER_GROWTH_PATHS = {
+    "Full Stack Developer": [
+        {
+            "skill": "system design",
+            "priority": "medium",
+            "reason": (
+                "Develop scalable application architecture "
+                "beyond the candidate's current full-stack skills."
+            ),
+        },
+        {
+            "skill": "automated testing",
+            "priority": "medium",
+            "reason": (
+                "Strengthen frontend and backend reliability "
+                "with automated testing."
+            ),
+        },
+        {
+            "skill": "microservices",
+            "priority": "medium",
+            "reason": (
+                "Build experience with scalable distributed "
+                "application architecture."
+            ),
+        },
+    ],
+
+    "Backend Developer": [
+        {
+            "skill": "system design",
+            "priority": "medium",
+            "reason": (
+                "Develop scalable backend architecture "
+                "and service design skills."
+            ),
+        },
+        {
+            "skill": "microservices",
+            "priority": "medium",
+            "reason": (
+                "Extend backend development toward "
+                "distributed service architecture."
+            ),
+        },
+        {
+            "skill": "redis",
+            "priority": "medium",
+            "reason": (
+                "Learn caching and fast data-access patterns "
+                "commonly used in production backends."
+            ),
+        },
+    ],
+
+    "Cloud Engineer": [
+        {
+            "skill": "kubernetes",
+            "priority": "medium",
+            "reason": (
+                "Advance container orchestration skills "
+                "beyond Docker."
+            ),
+        },
+        {
+            "skill": "terraform",
+            "priority": "medium",
+            "reason": (
+                "Develop infrastructure-as-code skills "
+                "for repeatable cloud deployments."
+            ),
+        },
+        {
+            "skill": "cloud architecture",
+            "priority": "medium",
+            "reason": (
+                "Develop the ability to design scalable "
+                "and reliable cloud systems."
+            ),
+        },
+    ],
+
+    "DevOps Engineer": [
+        {
+            "skill": "kubernetes",
+            "priority": "medium",
+            "reason": (
+                "Advance container orchestration and "
+                "production deployment skills."
+            ),
+        },
+        {
+            "skill": "terraform",
+            "priority": "medium",
+            "reason": (
+                "Develop infrastructure-as-code and "
+                "automated infrastructure management skills."
+            ),
+        },
+        {
+            "skill": "monitoring",
+            "priority": "medium",
+            "reason": (
+                "Strengthen production observability "
+                "and system monitoring skills."
+            ),
+        },
+    ],
+
+    "Frontend Developer": [
+        {
+            "skill": "automated testing",
+            "priority": "medium",
+            "reason": (
+                "Improve frontend reliability through "
+                "automated testing."
+            ),
+        },
+        {
+            "skill": "accessibility",
+            "priority": "medium",
+            "reason": (
+                "Build accessible and production-quality "
+                "user interfaces."
+            ),
+        },
+        {
+            "skill": "web performance",
+            "priority": "medium",
+            "reason": (
+                "Improve frontend performance and "
+                "user experience."
+            ),
+        },
+    ],
 }
 
 
@@ -145,7 +295,7 @@ def _build_evidence_text(experience, projects):
 def detect_career_roles(
     candidate_skills,
     experience=None,
-    projects=None
+    projects=None,
 ):
     """
     Determine career roles using:
@@ -176,7 +326,7 @@ def detect_career_roles(
 
     evidence_text = _build_evidence_text(
         experience,
-        projects
+        projects,
     )
 
     role_scores = []
@@ -184,12 +334,8 @@ def detect_career_roles(
     for role, profile in ROLE_PROFILES.items():
 
         core_skills = profile["core"]
-
         supporting_skills = profile["supporting"]
-
-        evidence_keywords = profile[
-            "evidence_keywords"
-        ]
+        evidence_keywords = profile["evidence_keywords"]
 
         matched_core = candidate.intersection(
             core_skills
@@ -242,20 +388,16 @@ def detect_career_roles(
             ) * 100
 
         if actual_score > 0:
-
             role_scores.append({
                 "role": role,
-                "score": round(
-                    score,
-                    2
-                ),
+                "score": round(score, 2),
                 "matched_core_skills": sorted(
                     matched_core
                 ),
                 "matched_supporting_skills": sorted(
                     matched_supporting
                 ),
-                "matched_evidence": matched_evidence
+                "matched_evidence": matched_evidence,
             })
 
     role_scores.sort(
@@ -266,9 +408,9 @@ def detect_career_roles(
             ),
             len(
                 item["matched_evidence"]
-            )
+            ),
         ),
-        reverse=True
+        reverse=True,
     )
 
     return role_scores
@@ -276,7 +418,7 @@ def detect_career_roles(
 
 def _sanitize_learning_priorities(
     learning_priorities,
-    candidate_skills
+    candidate_skills,
 ):
     """
     Sanitize deterministic learning priorities.
@@ -308,17 +450,17 @@ def _sanitize_learning_priorities(
 
             raw_skill = item.get(
                 "skill",
-                ""
+                "",
             )
 
             priority = item.get(
                 "priority",
-                "medium"
+                "medium",
             )
 
             reason = item.get(
                 "reason",
-                ""
+                "",
             )
 
         else:
@@ -349,20 +491,97 @@ def _sanitize_learning_priorities(
             ).lower(),
             "reason": str(
                 reason
-            )
+            ),
         })
 
     return sanitized
 
 
+def _build_career_growth_priorities(
+    detected_roles,
+    candidate_skills,
+    limit=3,
+):
+    """
+    Build learning priorities for candidates who already
+    satisfy the current job's skill requirements.
+
+    These are career-growth recommendations, not missing
+    job requirements.
+    """
+
+    candidate_skills = candidate_skills or []
+
+    candidate_normalized = {
+        normalize_skill(skill)
+        for skill in candidate_skills
+        if normalize_skill(skill)
+    }
+
+    growth_priorities = []
+    seen = set()
+
+    for role in detected_roles:
+
+        growth_path = CAREER_GROWTH_PATHS.get(
+            role,
+            [],
+        )
+
+        for item in growth_path:
+
+            skill = normalize_skill(
+                item.get(
+                    "skill",
+                    "",
+                )
+            )
+
+            if not skill:
+                continue
+
+            # Never recommend a skill the candidate
+            # already has.
+            if skill in candidate_normalized:
+                continue
+
+            # Avoid duplicate recommendations when
+            # multiple roles contain the same skill.
+            if skill in seen:
+                continue
+
+            seen.add(skill)
+
+            growth_priorities.append({
+                "skill": skill,
+                "priority": str(
+                    item.get(
+                        "priority",
+                        "medium",
+                    )
+                ).lower(),
+                "reason": str(
+                    item.get(
+                        "reason",
+                        "",
+                    )
+                ),
+            })
+
+            if len(growth_priorities) >= limit:
+                return growth_priorities
+
+    return growth_priorities
+
+
 def _sanitize_learning_path(
     learning_path,
-    learning_priorities
+    learning_priorities,
 ):
     """
     Sanitize the learning path generated by Ollama.
 
-    The deterministic learning priorities are authoritative.
+    Deterministic learning priorities are authoritative.
 
     Ollama may provide topics for a skill, but it cannot:
 
@@ -385,7 +604,7 @@ def _sanitize_learning_path(
 
         raw_skill = item.get(
             "skill",
-            ""
+            "",
         )
 
         normalized_skill = normalize_skill(
@@ -400,7 +619,7 @@ def _sanitize_learning_path(
 
         topics = item.get(
             "topics",
-            []
+            [],
         )
 
         if not isinstance(topics, list):
@@ -426,7 +645,7 @@ def _sanitize_learning_path(
             "priority": priority_map[
                 normalized_skill
             ],
-            "topics": clean_topics
+            "topics": clean_topics,
         }
 
     final_learning_path = []
@@ -448,7 +667,7 @@ def _sanitize_learning_path(
                 "priority": priority_item[
                     "priority"
                 ],
-                "topics": []
+                "topics": [],
             })
 
     return final_learning_path
@@ -458,15 +677,11 @@ def _build_recommendation_reason(
     detected_roles,
     candidate_skills,
     learning_priorities,
-    role_scores=None
+    role_scores=None,
 ):
     """
     Build a deterministic explanation for the
     career recommendation.
-
-    The explanation is based only on verified
-    candidate skills, role evidence, deterministic
-    role scores, and deterministic learning priorities.
     """
 
     role_scores = role_scores or []
@@ -491,13 +706,13 @@ def _build_recommendation_reason(
     else:
         skill_text = "the candidate's current skills"
 
-    missing_high = [
+    high_priority = [
         item["skill"]
         for item in learning_priorities
         if item["priority"] == "high"
     ]
 
-    missing_medium = [
+    medium_priority = [
         item["skill"]
         for item in learning_priorities
         if item["priority"] == "medium"
@@ -511,6 +726,7 @@ def _build_recommendation_reason(
     )
 
     if role_scores:
+
         evidence_parts = []
 
         for role in role_scores:
@@ -554,18 +770,18 @@ def _build_recommendation_reason(
                 evidence_parts
             )
 
-    if missing_high:
+    if high_priority:
         reason += (
             " The main required skill gap is "
-            + ", ".join(missing_high)
+            + ", ".join(high_priority)
             + "."
         )
 
-    if missing_medium:
+    if medium_priority:
         reason += (
-            " Additional preferred skill gaps "
+            " Additional learning priorities "
             "include "
-            + ", ".join(missing_medium)
+            + ", ".join(medium_priority)
             + "."
         )
 
@@ -576,13 +792,10 @@ def _build_structured_explanation(
     detected_roles,
     role_scores,
     candidate_skills,
-    learning_priorities
+    learning_priorities,
 ):
     """
-    Build deterministic structured explainability
-    for career recommendations.
-
-    No LLM-generated facts are used here.
+    Build deterministic structured explainability.
     """
 
     role_reasons = []
@@ -591,17 +804,17 @@ def _build_structured_explanation(
 
         core_skills = role.get(
             "matched_core_skills",
-            []
+            [],
         )
 
         supporting_skills = role.get(
             "matched_supporting_skills",
-            []
+            [],
         )
 
         evidence = role.get(
             "matched_evidence",
-            []
+            [],
         )
 
         evidence_parts = []
@@ -625,13 +838,16 @@ def _build_structured_explanation(
             )
 
         if evidence_parts:
+
             role_reason = (
                 f"{role['role']} scored "
                 f"{role['score']}% based on "
                 + "; ".join(evidence_parts)
                 + "."
             )
+
         else:
+
             role_reason = (
                 f"{role['role']} scored "
                 f"{role['score']}% based on "
@@ -644,7 +860,7 @@ def _build_structured_explanation(
             "core_skills": core_skills,
             "supporting_skills": supporting_skills,
             "evidence": evidence,
-            "reason": role_reason
+            "reason": role_reason,
         })
 
     high_priority = [
@@ -660,22 +876,26 @@ def _build_structured_explanation(
     ]
 
     if high_priority:
+
         skill_reason = (
             "The main required skill gap is "
             + ", ".join(high_priority)
             + "."
         )
+
     elif medium_priority:
+
         skill_reason = (
-            "The main identified preferred skill "
-            "gaps are "
+            "The main learning priorities are "
             + ", ".join(medium_priority)
             + "."
         )
+
     else:
+
         skill_reason = (
-            "No additional skill gaps were identified "
-            "for the current recommendation."
+            "No additional skill gaps or career-growth "
+            "learning priorities were identified."
         )
 
     if learning_priorities:
@@ -698,20 +918,25 @@ def _build_structured_explanation(
         )
 
     else:
+
         learning_reason = (
             "No additional learning priorities "
             "were identified."
         )
 
     if detected_roles:
+
         summary = (
             "The recommendation is based on the "
             "candidate's verified skills, role evidence, "
-            "and identified skill gaps. Recommended roles: "
+            "and identified skill gaps or career-growth "
+            "priorities. Recommended roles: "
             + ", ".join(detected_roles)
             + "."
         )
+
     else:
+
         summary = (
             "No career roles could be determined "
             "from the available candidate information."
@@ -721,7 +946,7 @@ def _build_structured_explanation(
         "summary": summary,
         "role_reasons": role_reasons,
         "skill_reason": skill_reason,
-        "learning_reason": learning_reason
+        "learning_reason": learning_reason,
     }
 
 
@@ -731,21 +956,22 @@ def generate_career_recommendation(
     education,
     missing_skills,
     projects=None,
-    learning_priorities=None
+    learning_priorities=None,
 ):
     """
     Generate practical career recommendations.
 
-    Career roles are detected deterministically
-    using skills and evidence.
+    Career roles are detected deterministically.
 
-    Learning priorities are determined by the
-    deterministic skill-gap engine.
+    Learning priorities are determined by:
 
-    Ollama provides:
+    1. Explicit deterministic learning priorities.
+    2. Missing job skills when explicit priorities
+       are not provided.
+    3. Career-growth paths when no learning priorities
+       remain.
 
-    - career recommendation explanation
-    - learning topics
+    Ollama provides learning topics.
 
     The deterministic engine controls:
 
@@ -756,15 +982,37 @@ def generate_career_recommendation(
     """
 
     candidate_skills = candidate_skills or []
+
+    # CareerPathView passes experience_years as a number.
+    # Normalize it so the evidence engine can iterate.
     experience = experience or []
+
+    if not isinstance(
+        experience,
+        (list, tuple),
+    ):
+        experience = [experience]
+
     education = education or []
+
     missing_skills = missing_skills or []
+
     projects = projects or []
+
+    if not isinstance(
+        projects,
+        (list, tuple),
+    ):
+        projects = [projects]
+
+    # -------------------------------------------------
+    # DETERMINISTIC CAREER ROLE DETECTION
+    # -------------------------------------------------
 
     role_scores = detect_career_roles(
         candidate_skills,
         experience,
-        projects
+        projects,
     )
 
     top_roles = role_scores[:3]
@@ -774,21 +1022,51 @@ def generate_career_recommendation(
         for item in top_roles
     ]
 
-    sanitized_priorities = (
-        _sanitize_learning_priorities(
-            learning_priorities,
-            candidate_skills
-        )
-    )
+    # -------------------------------------------------
+    # DETERMINISTIC LEARNING PRIORITIES
+    # -------------------------------------------------
 
-    # Backward-compatible fallback for callers
-    # that do not provide deterministic priorities.
-    if learning_priorities is None:
+    if learning_priorities is not None:
+
+        sanitized_priorities = (
+            _sanitize_learning_priorities(
+                learning_priorities,
+                candidate_skills,
+            )
+        )
+
+    else:
 
         sanitized_priorities = (
             _sanitize_learning_priorities(
                 missing_skills,
-                candidate_skills
+                candidate_skills,
+            )
+        )
+
+    # -------------------------------------------------
+    # CAREER-GROWTH FALLBACK
+    # -------------------------------------------------
+    #
+    # If the candidate already satisfies the job's
+    # requirements, there may be no missing skills.
+    #
+    # In that case, provide career-development skills
+    # based on the detected career roles.
+    #
+    # These are NOT treated as job gaps.
+    # -------------------------------------------------
+
+    if (
+        not sanitized_priorities
+        and detected_roles
+    ):
+
+        sanitized_priorities = (
+            _build_career_growth_priorities(
+                detected_roles,
+                candidate_skills,
+                limit=3,
             )
         )
 
@@ -832,9 +1110,13 @@ def generate_career_recommendation(
                 "learning_reason": (
                     "No learning priorities could be "
                     "determined."
-                )
-            }
+                ),
+            },
         }
+
+    # -------------------------------------------------
+    # OLLAMA PROMPT
+    # -------------------------------------------------
 
     prompt = f"""
 You are a career advisor for SkillBridge.
@@ -918,35 +1200,42 @@ IMPORTANT RULES:
 
 11. Preferred missing skills have MEDIUM priority.
 
-12. For EVERY deterministic learning priority,
+12. Career-growth priorities use MEDIUM priority
+    unless explicitly specified otherwise.
+
+13. For EVERY deterministic learning priority,
     create one learning_path entry.
 
-13. Each learning_path entry must contain:
+14. Each learning_path entry must contain:
 
     - skill
     - priority
     - topics
 
-14. The "skill" must exactly correspond to one
+15. The "skill" must exactly correspond to one
     of the Deterministic Learning Priorities.
 
-15. The "priority" must exactly match the
+16. The "priority" must exactly match the
     deterministic priority.
 
-16. Topics should be practical and ordered from
-    beginner fundamentals toward practical,
+17. Topics should be practical and ordered from
+    fundamentals toward practical,
     production-level usage.
 
-17. For a technical framework or technology,
-    include appropriate fundamentals, common
-    usage, integration, testing, and deployment
-    topics where applicable.
+18. For a technical framework or technology,
+    include appropriate fundamentals, common usage,
+    integration, testing, and deployment topics.
 
-18. Do not invent candidate experience.
+19. For architecture or advanced engineering
+    skills, include practical design concepts,
+    implementation patterns, testing, scalability,
+    reliability, and production considerations.
 
-19. Keep recommendations practical.
+20. Do not invent candidate experience.
 
-20. Return valid JSON only.
+21. Keep recommendations practical.
+
+22. Return valid JSON only.
 """
 
     response = call_ollama(
@@ -957,7 +1246,6 @@ IMPORTANT RULES:
     end = response.rfind("}")
 
     if start == -1 or end == -1:
-
         raise ValueError(
             "No JSON found in Ollama response."
         )
@@ -971,7 +1259,7 @@ IMPORTANT RULES:
     )
 
     # -------------------------------------------------
-    # Deterministic career-role enforcement
+    # DETERMINISTIC CAREER-ROLE ENFORCEMENT
     # -------------------------------------------------
 
     recommendation[
@@ -979,7 +1267,7 @@ IMPORTANT RULES:
     ] = detected_roles
 
     # -------------------------------------------------
-    # Deterministic skill priority enforcement
+    # DETERMINISTIC SKILL-PRIORITY ENFORCEMENT
     # -------------------------------------------------
 
     recommendation[
@@ -987,7 +1275,7 @@ IMPORTANT RULES:
     ] = priority_skills
 
     # -------------------------------------------------
-    # Deterministic learning-path enforcement
+    # DETERMINISTIC LEARNING-PATH ENFORCEMENT
     # -------------------------------------------------
 
     recommendation[
@@ -995,13 +1283,13 @@ IMPORTANT RULES:
     ] = _sanitize_learning_path(
         recommendation.get(
             "learning_path",
-            []
+            [],
         ),
-        sanitized_priorities
+        sanitized_priorities,
     )
 
     # -------------------------------------------------
-    # Deterministic recommendation explanation
+    # DETERMINISTIC RECOMMENDATION EXPLANATION
     # -------------------------------------------------
 
     recommendation[
@@ -1010,11 +1298,11 @@ IMPORTANT RULES:
         detected_roles,
         candidate_skills,
         sanitized_priorities,
-        top_roles
+        top_roles,
     )
 
     # -------------------------------------------------
-    # Deterministic structured explainability
+    # DETERMINISTIC STRUCTURED EXPLAINABILITY
     # -------------------------------------------------
 
     recommendation[
@@ -1023,7 +1311,6 @@ IMPORTANT RULES:
         detected_roles,
         top_roles,
         candidate_skills,
-        sanitized_priorities
+        sanitized_priorities,
     )
-
     return recommendation
