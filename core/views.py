@@ -24,7 +24,7 @@ if AI_DIR not in sys.path:
 
 from .models import User, Candidate, Job, Application, SkillGap, Notification, JobMatch
 from .serializers import UserRegisterSerializer, UserSerializer, JobSerializer, ApplicationSerializer
-from .ai_service import generate_gap_narrative, AIServiceError
+from llm.ollama_client import generate_gap_narrative, AIServiceError
 from parsing.resume_parser import parse_resume
 from .ai_bridge import get_skill_gap, get_career_recommendation
 from .analysis import gap_summary

@@ -1,211 +1,92 @@
-# SkillBridge API Contract
+# SkillBridge
 
-This document defines every API endpoint the **Frontend**, **Backend**, and **AI** teams agree to use.
-Backend builds these exactly. Frontend and AI can build against this shape even before the real backend is ready.
+A job platform with three roles: **candidate**, **company**, **admin**.
+Candidates upload a CV and apply to jobs. Companies post jobs and manage applicants. Admins approve companies and jobs.
 
-Base URL (local development): `http://127.0.0.1:8000/api/`
+## Tech stack
+- Frontend: React + Vite
+- Backend: Django + Django REST Framework (JWT login)
+- Database: PostgreSQL
+- AI: CV parsing and matching (code in `AI/`, used directly by Django), Ollama for text generation
 
----
-
-## Auth
-
-### Register
-- **POST** `/api/register/`
-- **Sends:**
-```json
-{
-  "name": "Stuti Bagale Thapa",
-  "email": "stuti@example.com",
-  "password": "yourpassword",
-  "role": "candidate"  // or "company" or "admin"
-}
+## Project structure
 ```
-- **Returns:** `201 Created`
-```json
-{
-  "id": 1,
-  "name": "Stuti Bagale Thapa",
-  "email": "stuti@example.com",
-  "role": "candidate"
-}
+core/                            Django app (models, API views)
+skillbridge_backend/             Django settings
+AI/                              AI modules (matching, parsing, intelligence, llm)
+frontend/skillbridge-frontend/   React app
+requirements.txt
+.env.example
 ```
 
-### Login
-- **POST** `/api/login/`
-- **Sends:**
-```json
-{ "email": "stuti@example.com", "password": "yourpassword" }
+## How the AI is connected
+Django imports the `AI/` modules directly (`core/ai_bridge.py`). There is no separate AI server.
+All Ollama calls go through one file: `AI/llm/ollama_client.py`. Ollama must be running for CV parsing, skill-gap summaries and career recommendations.
+
+## Setup
+
+### 1. Backend
 ```
-- **Returns:** `200 OK`
-```json
-{
-  "access": "jwt-access-token",
-  "refresh": "jwt-refresh-token",
-  "user": { "id": 1, "name": "Stuti", "email": "stuti@example.com", "role": "candidate" }
-}
+python -m venv venv
+venv\Scripts\activate            # Windows
+pip install -r requirements.txt
+copy .env.example .env           # then fill in your values
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py runserver
 ```
-- All endpoints below require this header on every request:
+Runs at http://127.0.0.1:8000
+
+### 2. Frontend
 ```
-Authorization: Bearer <access_token>
+cd frontend/skillbridge-frontend
+npm install
+npm run dev
 ```
+Runs at http://localhost:5173
 
----
+Optional: create `frontend/skillbridge-frontend/.env` with
+`VITE_API_URL=http://127.0.0.1:8000/api` (this is already the default).
 
-## Candidate — CV & Profile
+### 3. Ollama (for AI features)
+Install from https://ollama.com, then run `ollama pull llama3.2:latest`.
 
-### Upload CV
-- **POST** `/api/candidates/upload-cv/`
-- **Sends:** `multipart/form-data` with field `cv_file` (PDF)
-- **Returns:** `200 OK`
-```json
-{ "message": "CV uploaded successfully", "cv_file_path": "media/cvs/resume.pdf" }
-```
+## Environment variables (`.env`)
 
-### Get candidate profile (AI-extracted)
-- **GET** `/api/candidates/me/`
-- **Returns:** `200 OK`
-```json
-{
-  "cv_file_path": "media/cvs/resume.pdf",
-  "extracted_skills": [{"name": "React", "level": "strong"}],
-  "education": [{"degree": "BE Computer Engineering", "year": 2026}],
-  "experience_years": 1.5,
-  "resume_score": 78
-}
-```
-
----
-
-## Company & Jobs
-
-### Register a company profile / post a job
-- **POST** `/api/jobs/`
-- **Sends:**
-```json
-{
-  "title": "Backend Developer",
-  "description": "Django + REST API role",
-  "required_skills": [{"name": "Django", "weight": 0.8}, {"name": "PostgreSQL", "weight": 0.5}]
-}
-```
-- **Returns:** `201 Created`
-```json
-{ "id": 5, "title": "Backend Developer", "status": "pending" }
-```
-
-### List jobs
-- **GET** `/api/jobs/`
-- **Returns:** `200 OK`
-```json
-[
-  { "id": 5, "title": "Backend Developer", "company": "SkillBridge Inc", "status": "approved" }
-]
-```
-
-### Admin: approve/reject a job
-- **PATCH** `/api/jobs/5/approve/`
-- **Sends:** `{ "status": "approved" }`
-- **Returns:** `200 OK` — updated job object
-
----
-
-## Matching Engine
-
-### Get match score(s) for a candidate
-- **GET** `/api/jobs/5/match/`
-- **Returns:** `200 OK`
-```json
-{
-  "job_id": 5,
-  "match_score": 82.5,
-  "breakdown": [
-    { "skill": "Django", "candidate_has": true, "weight": 0.8, "status": "strong" },
-    { "skill": "PostgreSQL", "candidate_has": false, "weight": 0.5, "status": "missing" }
-  ]
-}
-```
-
-### Get ranked candidates for a job (company view)
-- **GET** `/api/jobs/5/ranked-candidates/`
-- **Returns:** `200 OK`
-```json
-[
-  { "candidate_id": 1, "name": "Stuti", "match_score": 82.5 },
-  { "candidate_id": 2, "name": "Naina", "match_score": 61.0 }
-]
-```
-
----
-
-## Skill Gap Analyzer
-
-### Get skill gap report for a candidate + job
-- **GET** `/api/skill-gaps/?candidate_id=1&job_id=5`
-- **Returns:** `200 OK`
-```json
-[
-  { "skill_name": "PostgreSQL", "status": "missing", "resource_links": ["https://example.com/learn-postgres"] },
-  { "skill_name": "React", "status": "strong", "resource_links": [] }
-]
-```
-
----
-
-## Career Path Recommendation
-
-### Get AI career suggestions for a candidate
-- **GET** `/api/candidates/career-paths/`
-- **Returns:** `200 OK`
-```json
-{
-  "suggestions": [
-    { "title": "Backend Developer", "reason": "Strong Django and API skills" },
-    { "title": "Data Analyst", "reason": "Good SQL and analytical background" }
-  ],
-  "roadmap": [
-    { "skill": "PostgreSQL", "priority": 1, "est_weeks": 2, "resources": ["https://example.com"] }
-  ]
-}
-```
-
----
-
-## Recruitment Pipeline (Company side)
-
-### Apply to a job (candidate)
-- **POST** `/api/jobs/5/apply/`
-- **Returns:** `201 Created` — application object with `recruitment_stage: "applied"`
-
-### Update application stage (company)
-- **PATCH** `/api/applications/12/`
-- **Sends:** `{ "recruitment_stage": "shortlisted" }`
-- **Returns:** `200 OK` — updated application object
-
-### List applications for a job (Kanban board data)
-- **GET** `/api/jobs/5/applications/`
-- **Returns:** `200 OK`
-```json
-[
-  { "id": 12, "candidate_name": "Stuti", "match_score": 82.5, "recruitment_stage": "shortlisted" }
-]
-```
-
-### Track my application status (candidate)
-- **GET** `/api/applications/mine/`
-- **Returns:** `200 OK` — list of the candidate's own applications with current stage
-
----
-
-## Status codes used across the API
-| Code | Meaning |
+| Name | Meaning |
 |---|---|
-| 200 | Success (GET/PATCH) |
-| 201 | Created (POST) |
-| 400 | Bad request / validation error |
-| 401 | Not logged in / invalid token |
-| 403 | Logged in but not allowed to do this |
-| 404 | Not found |
+| `SECRET_KEY` | Django secret key (long random text) |
+| `DEBUG` | `True` locally, `False` in production |
+| `ALLOWED_HOSTS` | Allowed host names, comma separated |
+| `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT` | PostgreSQL connection |
+| `DB_SSLMODE` | `prefer` locally, `require` for cloud databases such as Neon |
+| `CORS_ORIGINS` | Frontend URLs allowed to call the API, comma separated |
+| `OLLAMA_HOST` | Ollama address (default `http://127.0.0.1:11434`) |
+| `OLLAMA_MODEL` | Ollama model (default `llama3.2:latest`) |
+| `OLLAMA_TIMEOUT` | Seconds to wait for Ollama (default `300`) |
 
----
+Frontend: `VITE_API_URL` is the backend API address, including `/api`.
 
-*Last updated: built together by Frontend, Backend, and AI team members as the shared source of truth. Update this file whenever an endpoint changes — don't let the code and this doc drift apart.*
+Never commit `.env`. Share real values privately.
+
+## API
+Base URL: `http://127.0.0.1:8000/api`. Send `Authorization: Bearer <access token>` on all endpoints except register and login.
+
+### Auth
+| Method | Path | What |
+|---|---|---|
+| POST | `/register/` | Create an account |
+| POST | `/login/` | Get access and refresh tokens |
+| POST | `/token/refresh/` | Get a new access token |
+
+### Candidate
+| Method | Path | What |
+|---|---|---|
+| POST | `/candidates/upload-cv/` | Upload a CV (PDF, max 5 MB) |
+| GET, PATCH | `/candidates/me/` | View or edit own profile |
+| GET | `/candidates/career-paths/` | AI career recommendations |
+| GET | `/skill-gaps/` | Skill gap for a job, with AI summary |
+| GET | `/jobs/<id>/match/` | Match score for a job |
+| POST | `/jobs/<id>/apply/` | Apply to a job |
+| GET | `/applications/mine/` | Own applications |
+| GET | `/dashboard/candidate/` | Dashboard data |
