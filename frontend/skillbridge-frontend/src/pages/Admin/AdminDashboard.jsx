@@ -5,7 +5,6 @@ import {
   Building2,
   Check,
   FileText,
-  Flag,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -25,10 +24,8 @@ import {
   getAdminJobs,
   getAdminStats,
   getAdminUsers,
-  getFlaggedUsers,
   getStoredUser,
   logoutUser,
-  moderateUser,
   reviewJob,
   setCompanyApproved,
   setUserActive,
@@ -40,7 +37,6 @@ const TABS = [
   { id: "companies", label: "Companies", icon: Building2 },
   { id: "candidates", label: "Candidates", icon: UserCheck },
   { id: "users", label: "Users", icon: Users },
-  { id: "flagged", label: "Flagged", icon: Flag },
 ];
 
 const STATUS_STYLES = {
@@ -384,6 +380,7 @@ function CompaniesPanel({ companies, loading, onToggle, busyId }) {
   );
 }
 
+
 // ---------------------------------------------------------------
 // Candidates
 // ---------------------------------------------------------------
@@ -402,7 +399,7 @@ function CandidatesPanel() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    getAdminCandidates(search)
+    getAdminCandidates({ q: search })
       .then((d) => !cancelled && setCandidates(Array.isArray(d) ? d : []))
       .catch((e) => !cancelled && toast.error(e.message))
       .finally(() => !cancelled && setLoading(false));
@@ -659,146 +656,6 @@ function UsersPanel({ onChanged }) {
 }
 
 // ---------------------------------------------------------------
-// Flagged users
-// ---------------------------------------------------------------
-
-function FlaggedPanel() {
-  const [flagged, setFlagged] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [busyId, setBusyId] = useState(null);
-
-  const load = useCallback(() => {
-    setLoading(true);
-    return getFlaggedUsers()
-      .then((data) => setFlagged(Array.isArray(data) ? data : []))
-      .catch((e) => toast.error(e.message))
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  const decide = async (user, action) => {
-    if (
-      action === "suspend" &&
-      !window.confirm(`Suspend ${user.name}? They will not be able to log in.`)
-    ) {
-      return;
-    }
-    setBusyId(user.id);
-    try {
-      await moderateUser(user.id, action);
-      toast.success(`Done: ${action} ${user.name}`);
-      // The backend clears the flag once an action is recorded
-      setFlagged((list) => list.filter((u) => u.id !== user.id));
-    } catch (e) {
-      toast.error(e.message);
-    } finally {
-      setBusyId(null);
-    }
-  };
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-500">
-          Users with a low average rating (3+ reviews) or 3+ reports.
-        </p>
-        <button
-          onClick={load}
-          className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"
-        >
-          <RefreshCw size={14} /> Refresh
-        </button>
-      </div>
-
-      {loading ? (
-        <Spinner />
-      ) : flagged.length === 0 ? (
-        <EmptyState>No flagged users right now.</EmptyState>
-      ) : (
-        flagged.map((user) => (
-          <div
-            key={user.id}
-            className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm"
-          >
-            <div className="flex flex-col gap-3 sm:flex-row sm:justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800">
-                  {user.name}
-                </h3>
-                <p className="text-sm text-gray-500">
-                  {user.email} ·{" "}
-                  <span className="capitalize">{user.role}</span>
-                </p>
-              </div>
-              <div className="text-sm text-gray-600 sm:text-right">
-                <p>
-                  Average rating: <strong>{user.average_rating}</strong> (
-                  {user.review_count} reviews)
-                </p>
-                <p>
-                  Reports: <strong>{user.report_count}</strong>
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-3">
-              {user.reasons.map((r) => (
-                <span
-                  key={r}
-                  className="mr-2 inline-block rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-700"
-                >
-                  {r}
-                </span>
-              ))}
-            </div>
-
-            {user.recent_comments?.length > 0 && (
-              <ul className="mt-4 space-y-2">
-                {user.recent_comments.map((c, i) => (
-                  <li
-                    key={i}
-                    className="rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-600"
-                  >
-                    {c}
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            <div className="mt-5 flex flex-wrap gap-3">
-              <button
-                disabled={busyId === user.id}
-                onClick={() => decide(user, "dismiss")}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-60"
-              >
-                Dismiss
-              </button>
-              <button
-                disabled={busyId === user.id}
-                onClick={() => decide(user, "warn")}
-                className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:bg-amber-600 disabled:opacity-60"
-              >
-                Warn
-              </button>
-              <button
-                disabled={busyId === user.id}
-                onClick={() => decide(user, "suspend")}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60"
-              >
-                Suspend
-              </button>
-            </div>
-          </div>
-        ))
-      )}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------
 
@@ -1047,7 +904,6 @@ function AdminDashboard() {
           )}
           {tab === "candidates" && <CandidatesPanel />}
           {tab === "users" && <UsersPanel onChanged={refreshStats} />}
-          {tab === "flagged" && <FlaggedPanel />}
         </main>
       </div>
     </div>
