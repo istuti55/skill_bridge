@@ -197,15 +197,18 @@ class JobSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError('Every skill needs a non-empty name.')
         return value
 
-
 class ApplicationSerializer(serializers.ModelSerializer):
     candidate_name = serializers.CharField(source='candidate.user.name', read_only=True)
+    candidate_user_id = serializers.IntegerField(source='candidate.user_id', read_only=True)
     job_title = serializers.CharField(source='job.title', read_only=True)
+    company_name = serializers.CharField(source='job.company.company_name', read_only=True)
+    company_user_id = serializers.IntegerField(source='job.company.user_id', read_only=True)
 
     class Meta:
         model = Application
         fields = [
-            'id', 'candidate', 'candidate_name', 'job', 'job_title',
+            'id', 'candidate', 'candidate_name', 'candidate_user_id',
+            'job', 'job_title', 'company_name', 'company_user_id',
             'match_score', 'recruitment_stage', 'interview_date',
             'rejection_reason', 'applied_date'
         ]

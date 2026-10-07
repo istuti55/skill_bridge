@@ -481,3 +481,23 @@ export const setUserActive = async (userId, isActive) =>
     method: "PATCH",
     body: JSON.stringify({ is_active: isActive }),
   });
+
+
+  export const createReview = async ({ targetUserId, rating, comment, report }) =>
+  request("/reviews/", {
+    method: "POST",
+    body: JSON.stringify({
+      target_user_id: targetUserId,
+      rating,
+      comment: comment || "",
+      report: !!report,
+    }),
+  });
+
+export const getFlaggedUsers = async () => request("/admin/flagged/");
+
+export const moderateUser = async (userId, action) =>
+  request(`/admin/flagged/${userId}/`, {
+    method: "POST",
+    body: JSON.stringify({ action }),
+  });

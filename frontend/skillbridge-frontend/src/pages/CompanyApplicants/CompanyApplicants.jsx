@@ -5,12 +5,14 @@ import {
   getRankedCandidates,
   updateApplicationStage,
 } from "../../services/api";
+import ReviewModal from "../../components/Reviews/ReviewModal";
 
 function CompanyApplicants() {
   const [jobs, setJobs] = useState([]);
   const [selectedJobId, setSelectedJobId] = useState("");
   const [applications, setApplications] = useState([]);
   const [rankedCandidates, setRankedCandidates] = useState([]);
+  const [reviewTarget, setReviewTarget] = useState(null);
 
   const [loadingJobs, setLoadingJobs] = useState(true);
   const [loadingApplications, setLoadingApplications] = useState(false);
@@ -541,6 +543,25 @@ function CompanyApplicants() {
                     </span>
                   </div>
                 </div>
+
+                {/* Review candidate */}
+                <div className="mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setReviewTarget(application)}
+                    className="rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-2 text-sm font-medium text-yellow-800 hover:bg-yellow-100"
+                  >
+                    Review candidate
+                  </button>
+                </div>
+
+                {reviewTarget?.id === application.id && (
+                  <ReviewModal
+                    targetUserId={application.candidate_user_id}
+                    targetName={application.candidate_name}
+                    onClose={() => setReviewTarget(null)}
+                  />
+                )}
 
                 {/* Interview scheduling */}
                 {(application.recruitment_stage ===
