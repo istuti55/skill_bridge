@@ -4,7 +4,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import User, Company, Job, Application
+from .models import User, Company, Job, Application, Candidate
 from .permissions import IsAdmin
 
 
@@ -72,8 +72,17 @@ class AdminUserListView(APIView):
             for c in Company.objects.filter(user__in=users)
         }
 
-        data = [
-            {
+        candidates = {
+            c.user_id: c
+            for c in Candidate.objects.filter(user__in=users)
+                .annotate(app_count=Count('applications'))
+        }
+
+        data = []
+        for u in users[:500]:
+            c = candidates.get(u.id)
+            skills = c.extracted_skills if c and isinstance(c.extracted_skills, list) else []
+            data.append({
                 'id': u.id,
                 'name': u.name,
                 'email': u.email,
@@ -81,9 +90,13 @@ class AdminUserListView(APIView):
                 'is_active': u.is_active,
                 'date_joined': u.date_joined,
                 'company_name': company_names.get(u.id),
-            }
-            for u in users[:500]
-        ]
+                # candidate details (used by the admin Candidates tab)
+                'has_cv': bool(c and c.cv_file_path),
+                'skills': [str(sk) for sk in skills],
+                'experience_years': float(c.experience_years) if c else 0,
+                'resume_score': c.resume_score if c else None,
+                'applications_count': c.app_count if c else 0,
+            })
         return Response(data)
 
 
