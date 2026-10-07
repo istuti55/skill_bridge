@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Upload,
   FileText,
@@ -9,12 +9,35 @@ import {
 import toast from "react-hot-toast";
 import { uploadResume } from "../../../services/api";
 
+const ANALYSIS_STAGES = [
+  { upTo: 25, text: "Uploading your resume..." },
+  { upTo: 55, text: "Reading your CV with AI..." },
+  { upTo: 80, text: "Extracting skills and experience..." },
+  { upTo: 95, text: "Matching you with jobs..." },
+];
+
 function ResumeCard({ onAnalysisComplete }) {
   const [file, setFile] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [dragging, setDragging] = useState(false);
+
+    // Moves the bar slowly while the backend works.
+  // It slows down near 95% and never reaches 100% by itself.
+  useEffect(() => {
+    if (!analyzing) return;
+
+    const timer = setInterval(() => {
+      setUploadProgress((prev) => {
+        if (prev >= 95) return prev;
+        const step = prev < 50 ? 2 : prev < 80 ? 1 : 0.3;
+        return Math.min(95, prev + step);
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [analyzing]);
 
   const processFile = (selectedFile) => {
     if (!selectedFile) return;

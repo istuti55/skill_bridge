@@ -228,6 +228,7 @@ function Jobs() {
 
                       type={
                         job.type ||
+                        job.job_type_display ||
                         job.job_type ||
                         "Full-time"
                       }

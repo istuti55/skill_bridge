@@ -1,4 +1,4 @@
-﻿import { MapPin, DollarSign, Briefcase, CheckCircle } from "lucide-react";
+import { MapPin, DollarSign, Briefcase, CheckCircle } from "lucide-react";
 
 function JobCard({
   company,
@@ -34,22 +34,30 @@ function JobCard({
         )}
       </div>
 
-      <div className="flex flex-wrap gap-4 mt-5 text-sm text-gray-600">
-        <div className="flex items-center gap-1">
-          <MapPin size={16} />
-          {location}
-        </div>
+      {(location || salary || type) && (
+        <div className="flex flex-wrap gap-4 mt-5 text-sm text-gray-600">
+          {location && (
+            <div className="flex items-center gap-1">
+              <MapPin size={16} />
+              {location}
+            </div>
+          )}
 
-        <div className="flex items-center gap-1">
-          <DollarSign size={16} />
-          {salary}
-        </div>
+          {salary && (
+            <div className="flex items-center gap-1">
+              <DollarSign size={16} />
+              {salary}
+            </div>
+          )}
 
-        <div className="flex items-center gap-1">
-          <Briefcase size={16} />
-          {type}
+          {type && (
+            <div className="flex items-center gap-1">
+              <Briefcase size={16} />
+              {type}
+            </div>
+          )}
         </div>
-      </div>
+      )}
 
       {description && (
         <p className="text-gray-600 text-sm mt-5 line-clamp-3">
@@ -58,34 +66,42 @@ function JobCard({
       )}
 
       {requiredSkills?.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-4">
-          {requiredSkills.map((skill, index) => (
-            <span
-              key={index}
-              className="bg-purple-50 text-purple-700 px-2.5 py-1 rounded-full text-xs"
-            >
-              {skill}
-            </span>
-          ))}
+        <div className="mt-4">
+          <p className="text-xs font-semibold text-gray-500 mb-2">
+            Missing Skills
+          </p>
+
+          <div className="flex flex-wrap gap-2">
+            {requiredSkills.map((skill, index) => (
+              <span
+                key={index}
+                className="bg-purple-50 text-purple-700 px-2.5 py-1 rounded-full text-xs"
+              >
+                {skill}
+              </span>
+            ))}
+          </div>
         </div>
       )}
 
-      <div className="mt-6">
-        {isApplied ? (
-          <div className="flex items-center gap-2 text-green-600 font-semibold">
-            <CheckCircle size={19} />
-            Applied
-          </div>
-        ) : (
-          <button
-            onClick={() => onApply(jobId)}
-            disabled={applying}
-            className="w-full bg-purple-600 hover:bg-pink-600 text-white py-2.5 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition"
-          >
-            {applying ? "Applying..." : "Apply Now"}
-          </button>
-        )}
-      </div>
+      {onApply && (
+        <div className="mt-6">
+          {isApplied ? (
+            <div className="flex items-center gap-2 text-green-600 font-semibold">
+              <CheckCircle size={19} />
+              Applied
+            </div>
+          ) : (
+            <button
+              onClick={() => onApply(jobId)}
+              disabled={applying}
+              className="w-full bg-purple-600 hover:bg-pink-600 text-white py-2.5 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition"
+            >
+              {applying ? "Applying..." : "Apply Now"}
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
